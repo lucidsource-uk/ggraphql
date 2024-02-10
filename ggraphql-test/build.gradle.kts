@@ -2,7 +2,7 @@ import uk.co.lucidsource.ggraphql.plugin.GraphqlPluginExtension
 
 plugins {
     kotlin("jvm") version "1.9.21"
-    id("uk.co.lucidsource.ggraphql.plugin.graphql-plugin")
+    id("ggraphql-plugin")
 }
 
 repositories {

@@ -10,7 +10,7 @@ repositories {
 gradlePlugin {
     plugins {
         create("graphqlGenerate") {
-            id = "uk.co.lucidsource.ggraphql.plugin.graphql-plugin"
+            id = "ggraphql-plugin"
             implementationClass = "uk.co.lucidsource.ggraphql.plugin.GraphqlPlugin"
         }
     }
