@@ -1,0 +1,4 @@
+schema:
+  - scalars.graphql
+  - directives.graphql
+  - schema.graphql

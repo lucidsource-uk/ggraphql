@@ -1,0 +1,88 @@
+interface IdentifiedEntity {
+    id: String
+}
+
+union ChangeItem = ChangeItemList | ChangeItemValue
+
+type Candidate implements IdentifiedEntity {
+    audits: [ChangeLog!]! @paginated @resolver(name: "CandidateResolver")
+    firstname: String!
+    id: String @filter(operators: [EQ])
+    lastname: String! @filter(operators: [LIKE])
+    status: CandidateStatus!
+    tags: [String!]
+}
+
+type CandidateStatusAggregation {
+    interviewingCount: Int!
+    notSeekingCount: Int!
+    seekingCount: Int!
+}
+
+type ChangeItemList {
+    leftValues: [String!]!
+    property: String!
+    rightValues: [String!]!
+}
+
+type ChangeItemValue {
+    left: String
+    property: String!
+    right: String
+}
+
+type ChangeLog {
+    changes: [ChangeItem!]!
+    "ISO-8601"
+    time: DateTime!
+    type: ChangeLogType!
+    user: User
+}
+
+schema {
+    query: QueryT,
+    mutation: Mutation
+}
+
+"Mutation root"
+type Mutation {
+    persistCandidate(candidate: CandidateInput!): Candidate! @resolver(name: "CandidateResolver")
+    deleteCandidate(candidateId: String!): SuccessResponse! @resolver(name: "CandidateResolver")
+}
+
+#"Query root"
+type QueryT {
+    aggregateByStatus: CandidateStatusAggregation! @resolver(name: "StatsResolver")
+    candidate(candidateId: String!): Candidate @resolver(name: "CandidateResolver")
+    candidates: [Candidate!]! @paginated @filtered @resolver(name: "CandidateResolver")
+}
+
+type SuccessResponse {
+    success: Boolean!
+}
+
+type User {
+    avatarUrl: String
+    email: String!
+    id: String!
+}
+
+enum CandidateStatus {
+    INTERVIEWING
+    NOT_SEEKING
+    SEEKING
+}
+
+enum ChangeLogType {
+    CREATED
+    DELETED
+    MODIFIED
+}
+
+input CandidateInput {
+    id: String
+    firstname: String!
+    lastname: String!
+    status: CandidateStatus!
+    tags: [String]
+}

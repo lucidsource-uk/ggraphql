@@ -1,5 +1,5 @@
-rootProject.name = 'filtrate'
+rootProject.name = 'ggraphql'
 
-include("filtrate-api")
-include("filtrate-apt")
-include("filtrate-test")
+include("ggraphql-kotlin")
+include("ggraphql-plugin")
+//include("ggraphql-test")

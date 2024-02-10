@@ -1,0 +1,17 @@
+"https://spec.graphql.org/June2018/"
+
+enum FilterOperator {
+    EQ
+    LIKE
+    IN
+    GT,
+    GT_EQ
+    LT
+    LT_EQ
+}
+
+directive @ignore on OBJECT
+directive @resolver(name: String) on FIELD_DEFINITION
+directive @filter(operators: [FilterOperator!]!) on FIELD_DEFINITION
+directive @filtered on FIELD_DEFINITION
+directive @paginated on FIELD_DEFINITION
