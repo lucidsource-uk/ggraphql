@@ -1,79 +1,14 @@
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[GraphQLCodeDataFetcherRegistry.kt]=[
-package test
-
-import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLCodeRegistry
-
-public class GraphQLCodeDataFetcherRegistry(
-  public val queryResolver: QueryResolver,
-) {
-  public fun registerResolvers(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
-      GraphQLCodeRegistry.Builder {
-    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "stuff"),
-        QueryStuffDataFetcher(queryResolver))
-    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "list"),
-        QueryListDataFetcher(queryResolver))
-    return graphQLCodeRegistry
-  }
-}
-
-]
-
-
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[IdentifiedEntity.kt]=[
-package test
-
-import kotlin.String
-
-public interface IdentifiedEntity {
-  public val id: String?
-}
-
-]
-
-
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[IdentifiedEntityTypeResolver.kt]=[
-package test
-
-import graphql.TypeResolutionEnvironment
-import graphql.schema.GraphQLObjectType
-import graphql.schema.TypeResolver
-import java.lang.IllegalArgumentException
-
-public class IdentifiedEntityTypeResolver : TypeResolver {
-  override fun getType(env: TypeResolutionEnvironment): GraphQLObjectType {
-
-                val javaObject = env.getObject<Any>()
-                return when(javaObject) {
-            is TestDto -> env.getSchema().getObjectType("TestDto")
-    else -> throw IllegalArgumentException("Unexpected type in type resolver ${javaObject}")
-    }
-  }
-}
-
-]
-
-
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[OtherDto.kt]=[
-package test
-
-import kotlin.String
-
-public data class OtherDto(
-  public val id: String?,
-) : Results
-
-]
-
-
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[QueryListDataFetcher.kt]=[
-package test
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/QueryListDataFetcher.kt]=[
+package test.datafetchers
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import kotlin.Int
 import kotlin.String
+import test.models.TestDto
+import test.models.TestDtoFilter
+import test.resolvers.QueryResolver
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 
 public class QueryListDataFetcher(
@@ -81,8 +16,8 @@ public class QueryListDataFetcher(
 ) : DataFetcher<PaginatedResult<TestDto>> {
   override fun `get`(env: DataFetchingEnvironment): PaginatedResult<TestDto> {
     val where = ObjectMapper().convertValue(env.getArgument("where"), TestDtoFilter::class.java) 
-    val pageSize = ObjectMapper().convertValue(env.getArgument("pageSize"), Int::class.java) 
-    val cursor = ObjectMapper().convertValue(env.getArgument("cursor"), String::class.java) 
+    val pageSize = env.getArgument("pageSize") as Int? 
+    val cursor = env.getArgument("cursor") as String? 
     return service.list(where = where, pageSize = pageSize, cursor = cursor)
   }
 }
@@ -90,33 +25,14 @@ public class QueryListDataFetcher(
 ]
 
 
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[QueryResolver.kt]=[
-package test
-
-import kotlin.Int
-import kotlin.String
-import kotlin.collections.List
-import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
-
-public interface QueryResolver {
-  public fun stuff(): List<Results>
-
-  public fun list(
-    `where`: TestDtoFilter?,
-    pageSize: Int?,
-    cursor: String?,
-  ): PaginatedResult<TestDto>
-}
-
-]
-
-
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[QueryStuffDataFetcher.kt]=[
-package test
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/QueryStuffDataFetcher.kt]=[
+package test.datafetchers
 
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import kotlin.collections.List
+import test.models.Results
+import test.resolvers.QueryResolver
 
 public class QueryStuffDataFetcher(
   public val service: QueryResolver,
@@ -127,39 +43,65 @@ public class QueryStuffDataFetcher(
 ]
 
 
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[Results.kt]=[
-package test
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/TestDtoResultsDataFetcher.kt]=[
+package test.datafetchers
 
-public interface Results
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import kotlin.Int
+import kotlin.String
+import test.models.Results
+import test.models.TestDto
+import test.resolvers.TestDtoResolver
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 
-]
-
-
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[ResultsTypeResolver.kt]=[
-package test
-
-import graphql.TypeResolutionEnvironment
-import graphql.schema.GraphQLObjectType
-import graphql.schema.TypeResolver
-import java.lang.IllegalArgumentException
-
-public class ResultsTypeResolver : TypeResolver {
-  override fun getType(env: TypeResolutionEnvironment): GraphQLObjectType {
-
-                val javaObject = env.getObject<Any>()
-                return when(javaObject) {
-            is TestDto -> env.getSchema().getObjectType("TestDto")
-    is OtherDto -> env.getSchema().getObjectType("OtherDto")
-    else -> throw IllegalArgumentException("Unexpected type in type resolver ${javaObject}")
-    }
+public class TestDtoResultsDataFetcher(
+  public val service: TestDtoResolver,
+) : DataFetcher<PaginatedResult<Results>> {
+  override fun `get`(env: DataFetchingEnvironment): PaginatedResult<Results> {
+    val pageSize = env.getArgument("pageSize") as Int? 
+    val cursor = env.getArgument("cursor") as String? 
+    return service.results(testDto = env.getSource<TestDto>(), pageSize = pageSize, cursor = cursor)
   }
 }
 
 ]
 
 
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDto.kt]=[
-package test
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/IdentifiedEntity.kt]=[
+package test.models
+
+import kotlin.String
+
+public interface IdentifiedEntity {
+  public val id: String?
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/OtherDto.kt]=[
+package test.models
+
+import kotlin.String
+
+public data class OtherDto(
+  public val id: String?,
+) : Results
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/Results.kt]=[
+package test.models
+
+public interface Results
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDto.kt]=[
+package test.models
 
 import kotlin.Int
 import kotlin.String
@@ -173,8 +115,8 @@ public data class TestDto(
 ]
 
 
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDtoAgeFilterCriteria.kt]=[
-package test
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDtoAgeFilterCriteria.kt]=[
+package test.models
 
 import com.fasterxml.jackson.`annotation`.JsonCreator
 import com.fasterxml.jackson.`annotation`.JsonProperty
@@ -186,15 +128,15 @@ import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
 
 public data class TestDtoAgeFilterCriteria @JsonCreator constructor(
   @JsonProperty("eq")
-  public val eq: Int?,
+  public val eq: Int? = null,
   @JsonProperty("gt")
-  public val gt: Int?,
+  public val gt: Int? = null,
   @JsonProperty("gtEq")
-  public val gtEq: Int?,
+  public val gtEq: Int? = null,
   @JsonProperty("lt")
-  public val lt: Int?,
+  public val lt: Int? = null,
   @JsonProperty("ltEq")
-  public val ltEq: Int?,
+  public val ltEq: Int? = null,
 ) : FilterExpression {
   override fun ast(): Expression {
 
@@ -229,8 +171,8 @@ public data class TestDtoAgeFilterCriteria @JsonCreator constructor(
 ]
 
 
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDtoFilter.kt]=[
-package test
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDtoFilter.kt]=[
+package test.models
 
 import com.fasterxml.jackson.`annotation`.JsonCreator
 import com.fasterxml.jackson.`annotation`.JsonProperty
@@ -242,11 +184,11 @@ import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
 
 public data class TestDtoFilter @JsonCreator constructor(
   @JsonProperty("all")
-  public val all: List<TestDtoFilterCriteria>?,
+  public val all: List<TestDtoFilterCriteria>? = null,
   @JsonProperty("not")
-  public val not: List<TestDtoFilterCriteria>?,
+  public val not: List<TestDtoFilterCriteria>? = null,
   @JsonProperty("any")
-  public val any: List<TestDtoFilterCriteria>?,
+  public val any: List<TestDtoFilterCriteria>? = null,
 ) : FilterExpression {
   override fun ast(): Expression {
     val all = FilterGroupCompoundExpression(FilterGroupOperator.ALL, all?.map { it.ast() }?.filter {
@@ -268,8 +210,8 @@ public data class TestDtoFilter @JsonCreator constructor(
 ]
 
 
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDtoFilterCriteria.kt]=[
-package test
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDtoFilterCriteria.kt]=[
+package test.models
 
 import com.fasterxml.jackson.`annotation`.JsonCreator
 import com.fasterxml.jackson.`annotation`.JsonProperty
@@ -280,9 +222,9 @@ import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
 
 public data class TestDtoFilterCriteria @JsonCreator constructor(
   @JsonProperty("name")
-  public val name: TestDtoNameFilterCriteria?,
+  public val name: TestDtoNameFilterCriteria? = null,
   @JsonProperty("age")
-  public val age: TestDtoAgeFilterCriteria?,
+  public val age: TestDtoAgeFilterCriteria? = null,
 ) : FilterExpression {
   override fun ast(): Expression {
     val fieldExpressions = listOf(name,age).filterNotNull().map { it.ast() }.filter { it !=
@@ -297,8 +239,8 @@ public data class TestDtoFilterCriteria @JsonCreator constructor(
 ]
 
 
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDtoNameFilterCriteria.kt]=[
-package test
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDtoNameFilterCriteria.kt]=[
+package test.models
 
 import com.fasterxml.jackson.`annotation`.JsonCreator
 import com.fasterxml.jackson.`annotation`.JsonProperty
@@ -310,7 +252,7 @@ import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
 
 public data class TestDtoNameFilterCriteria @JsonCreator constructor(
   @JsonProperty("eq")
-  public val eq: String?,
+  public val eq: String? = null,
 ) : FilterExpression {
   override fun ast(): Expression {
 
@@ -325,8 +267,128 @@ public data class TestDtoNameFilterCriteria @JsonCreator constructor(
 ]
 
 
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TypeResolverWiring.kt]=[
-package test
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/GraphQLCodeDataFetcherRegistry.kt]=[
+package test.resolvers
+
+import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLCodeRegistry
+import test.datafetchers.QueryListDataFetcher
+import test.datafetchers.QueryStuffDataFetcher
+import test.datafetchers.TestDtoResultsDataFetcher
+
+public class GraphQLCodeDataFetcherRegistry(
+  public val queryResolver: QueryResolver,
+  public val testDtoResolver: TestDtoResolver,
+) {
+  public fun registerResolvers(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
+      GraphQLCodeRegistry.Builder {
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "stuff"),
+        QueryStuffDataFetcher(queryResolver))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "list"),
+        QueryListDataFetcher(queryResolver))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("TestDto", "results"),
+        TestDtoResultsDataFetcher(testDtoResolver))
+    return graphQLCodeRegistry
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/QueryResolver.kt]=[
+package test.resolvers
+
+import kotlin.Int
+import kotlin.String
+import kotlin.collections.List
+import test.models.Results
+import test.models.TestDto
+import test.models.TestDtoFilter
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+
+public interface QueryResolver {
+  public fun stuff(): List<Results>
+
+  public fun list(
+    `where`: TestDtoFilter?,
+    pageSize: Int?,
+    cursor: String?,
+  ): PaginatedResult<TestDto>
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/TestDtoResolver.kt]=[
+package test.resolvers
+
+import kotlin.Int
+import kotlin.String
+import test.models.Results
+import test.models.TestDto
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+
+public interface TestDtoResolver {
+  public fun results(
+    pageSize: Int?,
+    cursor: String?,
+    testDto: TestDto,
+  ): PaginatedResult<Results>
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/wiring/IdentifiedEntityTypeResolver.kt]=[
+package test.wiring
+
+import graphql.TypeResolutionEnvironment
+import graphql.schema.GraphQLObjectType
+import graphql.schema.TypeResolver
+import java.lang.IllegalArgumentException
+import test.models.TestDto
+
+public class IdentifiedEntityTypeResolver : TypeResolver {
+  override fun getType(env: TypeResolutionEnvironment): GraphQLObjectType {
+
+                val javaObject = env.getObject<Any>()
+                return when(javaObject) {
+            is TestDto -> env.getSchema().getObjectType("TestDto")
+    else -> throw IllegalArgumentException("Unexpected type in type resolver ${javaObject}")
+    }
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/wiring/ResultsTypeResolver.kt]=[
+package test.wiring
+
+import graphql.TypeResolutionEnvironment
+import graphql.schema.GraphQLObjectType
+import graphql.schema.TypeResolver
+import java.lang.IllegalArgumentException
+import test.models.OtherDto
+import test.models.TestDto
+
+public class ResultsTypeResolver : TypeResolver {
+  override fun getType(env: TypeResolutionEnvironment): GraphQLObjectType {
+
+                val javaObject = env.getObject<Any>()
+                return when(javaObject) {
+            is TestDto -> env.getSchema().getObjectType("TestDto")
+    is OtherDto -> env.getSchema().getObjectType("OtherDto")
+    else -> throw IllegalArgumentException("Unexpected type in type resolver ${javaObject}")
+    }
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/wiring/TypeResolverWiring.kt]=[
+package test.wiring
 
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.TypeRuntimeWiring
@@ -336,12 +398,12 @@ public object TypeResolverWiring {
 
                 wiring.type(
                     TypeRuntimeWiring.newTypeWiring("Results")
-                        .typeResolver(ResultsTypeResolver()).build()
+                        .typeResolver(test.wiring.ResultsTypeResolver()).build()
                 )
                 
                 wiring.type(
                     TypeRuntimeWiring.newTypeWiring("IdentifiedEntity")
-                        .typeResolver(IdentifiedEntityTypeResolver()).build()
+                        .typeResolver(test.wiring.IdentifiedEntityTypeResolver()).build()
                 )
                 return wiring
   }
@@ -351,7 +413,7 @@ public object TypeResolverWiring {
 
 
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[generated-files]=[
-TypeResolverWiring.kt,TestDtoNameFilterCriteria.kt,TestDtoAgeFilterCriteria.kt,TestDto.kt,ResultsTypeResolver.kt,GraphQLCodeDataFetcherRegistry.kt,QueryListDataFetcher.kt,TestDtoFilter.kt,Results.kt,QueryStuffDataFetcher.kt,QueryResolver.kt,TestDtoFilterCriteria.kt,IdentifiedEntityTypeResolver.kt,OtherDto.kt,IdentifiedEntity.kt
+/test/datafetchers/QueryStuffDataFetcher.kt,/test/datafetchers/TestDtoResultsDataFetcher.kt,/test/datafetchers/QueryListDataFetcher.kt,/test/wiring/IdentifiedEntityTypeResolver.kt,/test/wiring/ResultsTypeResolver.kt,/test/wiring/TypeResolverWiring.kt,/test/resolvers/QueryResolver.kt,/test/resolvers/GraphQLCodeDataFetcherRegistry.kt,/test/resolvers/TestDtoResolver.kt,/test/models/IdentifiedEntity.kt,/test/models/OtherDto.kt,/test/models/TestDtoFilterCriteria.kt,/test/models/Results.kt,/test/models/TestDtoFilter.kt,/test/models/TestDto.kt,/test/models/TestDtoAgeFilterCriteria.kt,/test/models/TestDtoNameFilterCriteria.kt
 ]
 
 
@@ -371,10 +433,19 @@ type Query {
   stuff: [Results!]!
 }
 
+type ResultsPaginatedResult {
+  nextCursor: String
+  nodes: [Results!]!
+  pageNumber: Int!
+  previousCursor: String
+  total: Int!
+}
+
 type TestDto implements IdentifiedEntity {
   age: Int!
   id: String
   name: String!
+  results(cursor: String, pageSize: Int = 10): ResultsPaginatedResult!
 }
 
 type TestDtoPaginatedResult {

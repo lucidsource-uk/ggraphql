@@ -133,6 +133,7 @@ input CandidateInput {
 }
 
 input CandidateLastnameFilterCriteria {
+  eq: String
   like: String
 }
 

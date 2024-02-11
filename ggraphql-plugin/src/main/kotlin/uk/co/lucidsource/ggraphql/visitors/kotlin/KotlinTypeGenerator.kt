@@ -1,6 +1,7 @@
 package uk.co.lucidsource.ggraphql.visitors.kotlin
 
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
@@ -19,8 +20,6 @@ import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
 class KotlinTypeGenerator(
     private val typeResolver: KotlinTypeResolver
 ) : SDLNodeVisitor {
-    private val unionTypes = mutableMapOf<String, String>()
-
     override fun visitObjectType(
         objectTypeDefinition: ObjectTypeDefinition,
         context: SDLNodeVisitorContext
@@ -42,12 +41,12 @@ class KotlinTypeGenerator(
 
         val implements = objectTypeDefinition.implements
             .mapNotNull { it as? TypeName }
-            .map { typeResolver.getTypeForName(it.name) }
+            .map { typeResolver.getModelTypeForName(it.name) }
 
         val properties = objectTypeDefinition.fieldDefinitions
             .filter { it.getResolverAspectResolverName() == null }
             .map {
-                val propertyBuilder = PropertySpec.builder(it.name, typeResolver.getKotlinType(it.type))
+                val propertyBuilder = PropertySpec.builder(it.name, typeResolver.getKotlinTypeForModel(it.type))
                     .initializer(CodeBlock.of(it.name))
 
                 if (overrideProperties.contains(it.name)) {
@@ -61,7 +60,7 @@ class KotlinTypeGenerator(
         val parameters = objectTypeDefinition.fieldDefinitions
             .filter { it.getResolverAspectResolverName() == null }
             .map {
-                ParameterSpec.builder(it.name, typeResolver.getKotlinType(it.type))
+                ParameterSpec.builder(it.name, typeResolver.getKotlinTypeForModel(it.type))
                     .build()
             }
 
@@ -75,31 +74,11 @@ class KotlinTypeGenerator(
             )
             .addProperties(properties)
 
-        if (unionTypes.containsKey(objectTypeDefinition.name)) {
-            kotlinTypeBuilder.addSuperinterface(typeResolver.getTypeForName(unionTypes[objectTypeDefinition.name]!!))
+        if (context.typesImplementingUnions.containsKey(objectTypeDefinition.name)) {
+            kotlinTypeBuilder.addSuperinterface(typeResolver.getModelTypeForName(context.typesImplementingUnions[objectTypeDefinition.name]!!))
         }
 
-        context.typeSpecs += kotlinTypeBuilder.build()
-    }
-
-    override fun visitUnionType(
-        unionTypeDefinition: UnionTypeDefinition,
-        context: SDLNodeVisitorContext
-    ) {
-        val hasLists = unionTypeDefinition.memberTypes
-            .any { GraphQLTypeUtil.isListType(it) }
-
-        if (hasLists) {
-            throw IllegalArgumentException("Union cannot contain list types")
-        }
-
-        unionTypeDefinition.memberTypes
-            .forEach {
-                unionTypes[GraphQLTypeUtil.getTypeName(it)] = unionTypeDefinition.name
-            }
-
-        context.typeSpecs += TypeSpec.interfaceBuilder(unionTypeDefinition.name)
-            .build()
+        context.typeSpecs += FileSpec.get(typeResolver.getModelPackageName(), kotlinTypeBuilder.build())
     }
 
     override fun visitEnumType(
@@ -113,6 +92,6 @@ class KotlinTypeGenerator(
                 enumBuilder.addEnumConstant(it.name)
             }
 
-        context.typeSpecs += enumBuilder.build()
+        context.typeSpecs += FileSpec.get(typeResolver.getModelPackageName(), enumBuilder.build())
     }
 }

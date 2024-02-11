@@ -1,16 +1,17 @@
 package uk.co.lucidsource.ggraphql.visitors.kotlin
 
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeSpec
 import graphql.TypeResolutionEnvironment
+import graphql.language.TypeName
 import graphql.language.UnionTypeDefinition
 import graphql.schema.GraphQLObjectType
 import graphql.schema.TypeResolver
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.TypeRuntimeWiring
-import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultTypeResolverName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeUtil
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitor
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
@@ -18,7 +19,7 @@ import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
 class KotlinTypeResolverGenerator(
     val typeResolver: KotlinTypeResolver
 ) : SDLNodeVisitor {
-    val wiredTypes: MutableSet<String> = mutableSetOf()
+    private val wiredTypes: MutableSet<String> = mutableSetOf()
 
     private fun getResolverNameForTypeName(typeName: String): String {
         return typeName + "TypeResolver"
@@ -46,8 +47,8 @@ class KotlinTypeResolverGenerator(
 
         implementedByTypeNames.map {
             CodeBlock.of(
-                "is %L -> env.getSchema().getObjectType(%S)\n",
-                it,
+                "is %T -> env.getSchema().getObjectType(%S)\n",
+                typeResolver.getModelTypeForName(it).copy(nullable = false),
                 it
             )
         }.forEach { typeResolverFunctionBuilder.addCode(it) }
@@ -71,15 +72,19 @@ class KotlinTypeResolverGenerator(
         unionTypeDefinition: UnionTypeDefinition,
         context: SDLNodeVisitorContext
     ) {
-        context.typeSpecs += generateInterfaceTypeResolver(
-            unionTypeDefinition.name,
-            unionTypeDefinition.memberTypes.map { GraphQLTypeUtil.getTypeName(it) }.toSet()
+        context.typeSpecs += FileSpec.get(
+            typeResolver.getWiringPackageName(), generateInterfaceTypeResolver(
+                unionTypeDefinition.name,
+                unionTypeDefinition.memberTypes.map { GraphQLTypeUtil.getTypeName(it) }.toSet()
+            )
         )
     }
 
     override fun finalize(context: SDLNodeVisitorContext) {
         context.typeSpecs += context.interfaces.values.map {
             generateInterfaceTypeResolver(it.name, it.implementedBy)
+        }.map {
+            FileSpec.get(typeResolver.getWiringPackageName(), it)
         }
 
         val autoWiringFunctionBuilder = FunSpec.builder("wireTypeResolvers")
@@ -93,7 +98,10 @@ class KotlinTypeResolverGenerator(
                 %T.newTypeWiring(%S)
                     .typeResolver(%L()).build()
             )
-            """, TypeRuntimeWiring::class.java, it, getResolverNameForTypeName(it)
+            """,
+                TypeRuntimeWiring::class.java,
+                it,
+                typeResolver.getWiringTypeForModel(TypeName(getResolverNameForTypeName(it))).copy(nullable = false)
             )
         }.forEach {
             autoWiringFunctionBuilder.addCode(it)
@@ -101,8 +109,10 @@ class KotlinTypeResolverGenerator(
 
         autoWiringFunctionBuilder.addCode(CodeBlock.of("return wiring"))
 
-        context.typeSpecs += TypeSpec.objectBuilder("TypeResolverWiring")
-            .addFunction(autoWiringFunctionBuilder.build())
-            .build()
+        context.typeSpecs += FileSpec.get(
+            typeResolver.getWiringPackageName(), TypeSpec.objectBuilder("TypeResolverWiring")
+                .addFunction(autoWiringFunctionBuilder.build())
+                .build()
+        )
     }
 }

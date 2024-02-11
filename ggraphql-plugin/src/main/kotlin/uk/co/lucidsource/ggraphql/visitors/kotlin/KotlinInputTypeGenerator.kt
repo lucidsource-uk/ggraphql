@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
@@ -19,6 +20,7 @@ import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getAppliedFilterFieldNameForTypeAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getAppliedFilterForTypeAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isFilterForTypeAspectApplied
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeUtil
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitor
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
 
@@ -31,14 +33,15 @@ class KotlinInputTypeGenerator(
     ) {
         val properties = inputObjectTypeDefinition.inputValueDefinitions
             .map {
-                PropertySpec.builder(it.name, typeResolver.getKotlinType(it.type))
+                PropertySpec.builder(it.name, typeResolver.getKotlinTypeForModel(it.type))
                     .initializer(CodeBlock.of(it.name)).build()
             }
 
         val parameters = inputObjectTypeDefinition.inputValueDefinitions
             .map {
-                ParameterSpec.builder(it.name, typeResolver.getKotlinType(it.type))
+                ParameterSpec.builder(it.name, typeResolver.getKotlinTypeForModel(it.type))
                     .addAnnotation(AnnotationSpec.builder(JsonProperty::class).addMember("%S", it.name).build())
+                    .defaultValue(if (GraphQLTypeUtil.isNullType(it.type)) CodeBlock.of("null") else null)
                     .build()
             }
 
@@ -56,7 +59,7 @@ class KotlinInputTypeGenerator(
             applyFilterAstGenerate(inputTypeBuilder, inputObjectTypeDefinition)
         }
 
-        context.typeSpecs += inputTypeBuilder.build()
+        context.typeSpecs += FileSpec.get(typeResolver.getModelPackageName(), inputTypeBuilder.build())
     }
 
     private fun applyFilterAstGenerate(inputTypeBuilder: TypeSpec.Builder, inputObject: InputObjectTypeDefinition) {

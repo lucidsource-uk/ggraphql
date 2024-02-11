@@ -2,6 +2,7 @@ package uk.co.lucidsource.ggraphql
 
 import com.squareup.kotlinpoet.FileSpec
 import graphql.language.EnumTypeDefinition
+import graphql.scalars.ExtendedScalars
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.SchemaPrinter
 import graphql.schema.idl.TypeDefinitionRegistry
@@ -16,6 +17,7 @@ import uk.co.lucidsource.ggraphql.transformers.schema.ResolvedDirectiveTransform
 import uk.co.lucidsource.ggraphql.visitors.SDLIterator
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorChain
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
+import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinDataFetcherTypeGenerator
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinInputTypeGenerator
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinInterfaceTypeGenerator
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinResolverGenerator
@@ -23,6 +25,9 @@ import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinTypeGenerator
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinTypeResolver
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinTypeResolverGenerator
 import java.io.File
+import java.net.URL
+import java.time.LocalTime
+import java.util.Date
 import kotlin.io.path.Path
 import kotlin.jvm.optionals.getOrNull
 
@@ -43,7 +48,14 @@ object Generator {
             schemaDefinition?.operationTypeDefinitions?.firstOrNull { it.name == "mutation" }?.typeName?.name
                 ?: "Mutation"
 
-        val typeResolver = KotlinTypeResolver(packageName)
+        val typeResolver = KotlinTypeResolver(
+            packageName, additionalTypes = mapOf(
+                ExtendedScalars.Url.name to URL::class,
+                ExtendedScalars.Date.name to Date::class,
+                ExtendedScalars.DateTime.name to Date::class,
+                ExtendedScalars.LocalTime.name to LocalTime::class
+            )
+        )
         val context = SDLNodeTransformerContext(
             queryRootName = queryRootName,
             mutationRootName = mutationRootName,
@@ -68,21 +80,20 @@ object Generator {
             .filter { !sdlExcludedTypes.contains(it) }
 
         val visitorContext = SDLNodeVisitorContext()
-        val kotlinResolverGenerator = KotlinResolverGenerator(typeResolver)
         SDLIterator(
             SDLNodeVisitorChain(
                 KotlinInterfaceTypeGenerator(typeResolver),
                 KotlinTypeGenerator(typeResolver),
                 KotlinInputTypeGenerator(typeResolver),
                 KotlinTypeResolverGenerator(typeResolver),
-                kotlinResolverGenerator
+                KotlinDataFetcherTypeGenerator(typeResolver),
+                KotlinResolverGenerator(typeResolver)
             )
         )
             .iterate(sdlTypes, visitorContext)
 
-        (visitorContext.typeSpecs + kotlinResolverGenerator.typeSpecs).forEach {
-            FileSpec.get(packageName, it)
-                .writeTo(Path(kotlinOutputDirectory.path))
+        visitorContext.typeSpecs.forEach {
+            it.writeTo(Path(kotlinOutputDirectory.path))
         }
 
         typeDefinitionRegistry.addAll(context.newTypes.values)

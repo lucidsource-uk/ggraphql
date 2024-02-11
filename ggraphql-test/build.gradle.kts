@@ -37,6 +37,7 @@ dependencies {
     implementation("com.graphql-java:graphql-java-extended-scalars:21.0")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("io.github.origin-energy:java-snapshot-testing-junit5:4.+")
 }
 
 tasks.test {

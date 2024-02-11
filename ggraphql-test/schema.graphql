@@ -8,7 +8,7 @@ type Candidate implements IdentifiedEntity {
     audits: [ChangeLog!]! @paginated @resolver(name: "CandidateResolver")
     firstname: String!
     id: String @filter(operators: [EQ])
-    lastname: String! @filter(operators: [LIKE])
+    lastname: String! @filter(operators: [LIKE, EQ])
     status: CandidateStatus!
     tags: [String!] @filter(operators: [IN])
 }

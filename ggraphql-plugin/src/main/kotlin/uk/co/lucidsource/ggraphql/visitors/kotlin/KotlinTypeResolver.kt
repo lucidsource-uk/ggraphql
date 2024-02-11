@@ -7,44 +7,78 @@ import com.squareup.kotlinpoet.asTypeName
 import graphql.language.ListType
 import graphql.language.NonNullType
 import graphql.language.Type
-import graphql.scalars.ExtendedScalars
-import java.net.URL
-import java.time.LocalTime
-import java.util.Date
+import kotlin.reflect.KClass
 
 class KotlinTypeResolver(
-    val packageName: String
+    private val basePackageName: String,
+    additionalTypes: Map<String, KClass<*>> = mapOf()
 ) {
-    val graphqlTypes = mapOf(
-        "String" to String::class,
-        "Int" to Int::class,
-        "Float" to Float::class,
-        "Boolean" to Boolean::class,
-        "ID" to String::class,
-        ExtendedScalars.Url.name to URL::class,
-        ExtendedScalars.Date.name to Date::class,
-        ExtendedScalars.DateTime.name to Date::class,
-        ExtendedScalars.LocalTime.name to LocalTime::class
-    )
-
-    fun getTypeForName(name: String): ClassName {
-        return ClassName(packageName, name)
+    companion object {
+        val STANDARD_TYPES = mapOf(
+            "String" to String::class,
+            "Int" to Int::class,
+            "Float" to Float::class,
+            "Boolean" to Boolean::class,
+            "ID" to String::class
+        )
     }
 
-    fun getKotlinType(graphqlType: Type<*>): TypeName {
+    private val resolvableTypes = STANDARD_TYPES + additionalTypes
+
+    fun getDataFetcherPackageName(): String {
+        return "$basePackageName.datafetchers."
+    }
+
+    fun getResolverPackageName(): String {
+        return "$basePackageName.resolvers."
+    }
+
+    fun getModelPackageName(): String {
+        return "$basePackageName.models."
+    }
+
+    fun getWiringPackageName(): String {
+        return "$basePackageName.wiring."
+    }
+
+    fun isComplexTypeName(name: String): Boolean {
+        return !STANDARD_TYPES.containsKey(name)
+    }
+
+    fun getModelTypeForName(name: String): ClassName {
+        return ClassName(getModelPackageName(), name)
+    }
+
+    fun getResolverTypeForName(name: String): ClassName {
+        return ClassName(getResolverPackageName(), name)
+    }
+
+    fun getDataFetcherForName(name: String): ClassName {
+        return ClassName(getDataFetcherPackageName(), name)
+    }
+
+    fun getKotlinTypeForModel(graphqlType: Type<*>): TypeName {
+        return getKotlinType(getModelPackageName(), graphqlType)
+    }
+
+    fun getWiringTypeForModel(graphqlType: Type<*>): TypeName {
+        return getKotlinType(getWiringPackageName(), graphqlType)
+    }
+
+    private fun getKotlinType(packageName: String, graphqlType: Type<*>): TypeName {
         val baseType = if (graphqlType is NonNullType) graphqlType.type else graphqlType
         val isNullable = graphqlType !is NonNullType
 
         if (baseType is ListType) {
-            return List::class.asTypeName().parameterizedBy(getKotlinType(baseType.type))
+            return List::class.asTypeName().parameterizedBy(getKotlinType(packageName, baseType.type))
                 .copy(nullable = isNullable)
         }
 
         val graphqlNamedType = baseType as? graphql.language.TypeName
             ?: throw IllegalArgumentException("Unexpected type $baseType")
 
-        if (graphqlTypes.containsKey(graphqlNamedType.name)) {
-            return ClassName.bestGuess(graphqlTypes[graphqlNamedType.name]!!.qualifiedName!!)
+        if (resolvableTypes.containsKey(graphqlNamedType.name)) {
+            return ClassName.bestGuess(resolvableTypes[graphqlNamedType.name]!!.qualifiedName!!)
                 .copy(nullable = isNullable)
         }
 

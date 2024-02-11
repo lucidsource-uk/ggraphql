@@ -6,14 +6,12 @@ import graphql.language.Type
 import graphql.language.TypeName
 
 object GraphQLTypeUtil {
-
-    fun isComplexType(graphqlType: Type<*>): Boolean {
-        val base = unwrapType(graphqlType)
-        return (base is TypeName)
-    }
-
     fun isListType(type: Type<*>): Boolean {
         return if (type is NonNullType) type.type is ListType else type is ListType
+    }
+
+    fun isNullType(type: Type<*>): Boolean {
+        return type !is NonNullType
     }
 
     fun unwrapType(type: Type<*>): Type<*> {

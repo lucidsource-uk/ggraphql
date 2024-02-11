@@ -1,0 +1,18 @@
+uk.co.lucidsource.GraphQLTest.testMutation[mutation]=[
+ExecutionResultImpl{errors=[], data={persistCandidate={id=99, firstname=new, lastname=new}}, dataPresent=true, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLTest.testMutation[query]=[
+ExecutionResultImpl{errors=[], data={candidates={nodes=[{id=1, firstname=John, lastname=Doe}, {id=2, firstname=Jane, lastname=Doe}, {id=99, firstname=new, lastname=new}], total=3, pageNumber=1}}, dataPresent=true, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLTest.testQueryPaginatedResults=[
+ExecutionResultImpl{errors=[], data={candidates={nodes=[{id=1, firstname=John, lastname=Doe}, {id=2, firstname=Jane, lastname=Doe}], total=2, pageNumber=1}}, dataPresent=true, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLTest.testQueryUnionResults=[
+ExecutionResultImpl{errors=[], data={candidate={audits={nodes=[{changes=[{leftValues=[], property=tags, rightValues=[]}, {left=john, right=doe, property=firstname}]}]}}}, dataPresent=true, extensions=null}
+]

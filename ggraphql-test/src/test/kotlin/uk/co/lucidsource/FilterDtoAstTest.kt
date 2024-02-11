@@ -1,11 +1,11 @@
 package uk.co.lucidsource
 
 import org.junit.jupiter.api.Test
-import uk.co.lucidsource.generated.CandidateFilter
-import uk.co.lucidsource.generated.CandidateFilterCriteria
-import uk.co.lucidsource.generated.CandidateIdFilterCriteria
-import uk.co.lucidsource.generated.CandidateLastnameFilterCriteria
-import uk.co.lucidsource.generated.CandidateTagsFilterCriteria
+import uk.co.lucidsource.generated.models.CandidateFilter
+import uk.co.lucidsource.generated.models.CandidateFilterCriteria
+import uk.co.lucidsource.generated.models.CandidateIdFilterCriteria
+import uk.co.lucidsource.generated.models.CandidateLastnameFilterCriteria
+import uk.co.lucidsource.generated.models.CandidateTagsFilterCriteria
 import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
 import uk.co.lucidsource.ggraphql.api.filtering.ast.ExpressionVisitor
 import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterCompoundExpression
@@ -45,12 +45,8 @@ class FilterDtoAstTest {
     fun testFilterObjectEmptyExpression() {
         val ast = CandidateFilter(
             any = listOf(
-                CandidateFilterCriteria(
-                    id = null,
-                    lastname = null,
-                    tags = null
-                )
-            ), not = null, all = null
+                CandidateFilterCriteria()
+            )
         ).ast()
 
         assertEquals(Expression.EMPTY_EXPRESSION, ast)
@@ -61,11 +57,9 @@ class FilterDtoAstTest {
         val ast = CandidateFilter(
             any = listOf(
                 CandidateFilterCriteria(
-                    id = CandidateIdFilterCriteria(eq = null),
-                    lastname = null,
-                    tags = null
+                    id = CandidateIdFilterCriteria()
                 )
-            ), not = null, all = null
+            )
         ).ast()
 
         assertEquals(Expression.EMPTY_EXPRESSION, ast)
@@ -76,11 +70,9 @@ class FilterDtoAstTest {
         val ast = CandidateFilter(
             any = listOf(
                 CandidateFilterCriteria(
-                    id = CandidateIdFilterCriteria(eq = "test"),
-                    lastname = null,
-                    tags = null
+                    id = CandidateIdFilterCriteria(eq = "test")
                 )
-            ), not = null, all = null
+            )
         ).ast()
 
         val parsed = ast.accept(SimpleVisitor())
@@ -95,14 +87,12 @@ class FilterDtoAstTest {
                 CandidateFilterCriteria(
                     id = CandidateIdFilterCriteria(eq = "test1"),
                     lastname = CandidateLastnameFilterCriteria(like = "dogs.*"),
-                    tags = null
                 ),
                 CandidateFilterCriteria(
                     id = CandidateIdFilterCriteria(eq = "test2"),
-                    lastname = null,
                     tags = CandidateTagsFilterCriteria(`in` = listOf("tag1", "tag2"))
                 )
-            ), not = null, all = null
+            )
         ).ast()
 
         val parsed = ast.accept(SimpleVisitor())
@@ -110,6 +100,26 @@ class FilterDtoAstTest {
         assertEquals(
             "ALL(ANY(ALL((id EQ test1), (lastname LIKE dogs.*)), ALL((id EQ test2), (tags IN [tag1, tag2]))))",
             parsed
+        )
+    }
+
+    @Test
+    fun testQueryMultipleFieldCriteria() {
+        val ast = CandidateFilter(
+            any = listOf(
+                CandidateFilterCriteria(
+                    id = CandidateIdFilterCriteria(eq = "test1"),
+                    lastname = CandidateLastnameFilterCriteria(like = "dogs.*", eq = "test"),
+                )
+            )
+        ).ast()
+
+        val parsed = ast.accept(SimpleVisitor())
+
+        assertEquals(
+            "ALL(ANY(ALL((id EQ test1), (lastname LIKE dogs.*))))",
+            parsed,
+            "Only one filter criteria per field is supported"
         )
     }
 }
