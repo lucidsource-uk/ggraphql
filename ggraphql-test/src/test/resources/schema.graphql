@@ -1,0 +1,141 @@
+schema {
+  query: QueryT
+  mutation: Mutation
+}
+
+interface IdentifiedEntity {
+  id: String
+}
+
+union ChangeItem = ChangeItemList | ChangeItemValue
+
+type Candidate implements IdentifiedEntity {
+  audits(cursor: String, pageSize: Int = 10): ChangeLogPaginatedResult!
+  firstname: String!
+  id: String
+  lastname: String!
+  status: CandidateStatus!
+  tags: [String!]
+}
+
+type CandidatePaginatedResult {
+  nextCursor: String
+  nodes: [Candidate!]!
+  pageNumber: Int!
+  previousCursor: String
+  total: Int!
+}
+
+type CandidateStatusAggregation {
+  interviewingCount: Int!
+  notSeekingCount: Int!
+  seekingCount: Int!
+}
+
+type ChangeItemList {
+  leftValues: [String!]!
+  property: String!
+  rightValues: [String!]!
+}
+
+type ChangeItemValue {
+  left: String
+  property: String!
+  right: String
+}
+
+type ChangeLog {
+  changes: [ChangeItem!]!
+  "ISO-8601"
+  time: DateTime!
+  type: ChangeLogType!
+  user: User
+}
+
+type ChangeLogPaginatedResult {
+  nextCursor: String
+  nodes: [ChangeLog!]!
+  pageNumber: Int!
+  previousCursor: String
+  total: Int!
+}
+
+"Mutation root"
+type Mutation {
+  deleteCandidate(candidateId: String!): SuccessResponse!
+  persistCandidate(candidate: CandidateInput!): Candidate!
+}
+
+"\"Query root\""
+type QueryT {
+  aggregateByStatus: CandidateStatusAggregation!
+  candidate(candidateId: String!): Candidate
+  candidates(cursor: String, pageSize: Int = 10, where: CandidateFilter): CandidatePaginatedResult!
+}
+
+type SuccessResponse {
+  success: Boolean!
+}
+
+type User {
+  avatarUrl: String
+  email: String!
+  id: String!
+}
+
+enum CandidateStatus {
+  INTERVIEWING
+  NOT_SEEKING
+  SEEKING
+}
+
+enum ChangeLogType {
+  CREATED
+  DELETED
+  MODIFIED
+}
+
+"https://spec.graphql.org/June2018/"
+enum FilterOperator {
+  EQ
+  GT
+  GT_EQ
+  IN
+  LIKE
+  LT
+  LT_EQ
+}
+
+scalar DateTime
+
+input CandidateFilter {
+  all: [CandidateFilterCriteria!]
+  any: [CandidateFilterCriteria!]
+  not: [CandidateFilterCriteria!]
+}
+
+input CandidateFilterCriteria {
+  id: CandidateIdFilterCriteria
+  lastname: CandidateLastnameFilterCriteria
+  tags: CandidateTagsFilterCriteria
+}
+
+input CandidateIdFilterCriteria {
+  eq: String
+}
+
+input CandidateInput {
+  firstname: String!
+  id: String
+  lastname: String!
+  status: CandidateStatus!
+  tags: [String]
+}
+
+input CandidateLastnameFilterCriteria {
+  like: String
+}
+
+input CandidateTagsFilterCriteria {
+  in: [String]
+}

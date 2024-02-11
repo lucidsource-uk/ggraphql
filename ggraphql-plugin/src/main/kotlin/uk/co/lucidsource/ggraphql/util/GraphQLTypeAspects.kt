@@ -15,10 +15,38 @@ object GraphQLTypeAspects {
     private const val PAGINATED_DIRECTIVE = "paginated"
     private const val IGNORE_TYPE_DIRECTIVE = "ignore"
     private const val RESOLVED_DIRECTIVE = "resolver"
+    private const val FILTER_FIELD_NAME = "FILTER_FIELD_NAME"
 
-    fun InputObjectTypeDefinition.Builder.applyFilterForTypeAspect(objectTypeDefinition: ObjectTypeDefinition)
+    enum class FilterAspectType {
+        EXPRESSION,
+        OBJECT_CRITERIA,
+        FIELD_CRITERIA
+    }
+
+    fun InputObjectTypeDefinition.isFilterForTypeAspectApplied()
+        : Boolean {
+        return this.additionalData[FILTER_FOR_OBJECT_TYPE] != null
+    }
+
+    fun InputObjectTypeDefinition.getAppliedFilterForTypeAspect()
+        : FilterAspectType? {
+        return this.additionalData[FILTER_FOR_OBJECT_TYPE]?.let { FilterAspectType.valueOf(it) }
+    }
+
+    fun InputObjectTypeDefinition.getAppliedFilterFieldNameForTypeAspect()
+        : String? {
+        return this.additionalData[FILTER_FIELD_NAME]
+    }
+
+    fun InputObjectTypeDefinition.Builder.applyFilterFieldNameForTypeAspect(fieldName: String)
         : InputObjectTypeDefinition.Builder {
-        this.additionalData(FILTER_FOR_OBJECT_TYPE, objectTypeDefinition.name)
+        this.additionalData(FILTER_FIELD_NAME, fieldName)
+        return this
+    }
+
+    fun InputObjectTypeDefinition.Builder.applyFilterForTypeAspect(type: FilterAspectType)
+        : InputObjectTypeDefinition.Builder {
+        this.additionalData(FILTER_FOR_OBJECT_TYPE, type.name)
         return this
     }
 
@@ -41,17 +69,16 @@ object GraphQLTypeAspects {
             .argumentsByName["name"]?.value as? StringValue)?.value
     }
 
-    fun FieldDefinition.Builder.applyGeneratesResolverAspect(resolverName: String? = null): FieldDefinition.Builder {
+    fun FieldDefinition.Builder.applyGeneratesResolverAspect(
+        resolverName: String
+    ): FieldDefinition.Builder {
         val built = this.build() /// Ugh, why not just expose the set field :(
         if (built.hasDirective(RESOLVED_DIRECTIVE)) {
             return this
         }
 
-        val arguments: List<Argument> = if (resolverName == null) listOf()
-        else listOf(Argument("name", StringValue(resolverName)))
-
         return this
-            .directive(Directive(RESOLVED_DIRECTIVE, arguments))
+            .directive(Directive(RESOLVED_DIRECTIVE, listOf(Argument("name", StringValue(resolverName)))))
     }
 
     fun FieldDefinition.isPaginatedAspectApplied(): Boolean {

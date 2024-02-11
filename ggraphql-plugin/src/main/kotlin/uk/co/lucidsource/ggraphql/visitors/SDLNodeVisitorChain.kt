@@ -12,36 +12,40 @@ class SDLNodeVisitorChain(
 ) : SDLNodeVisitor {
     override fun visitObjectType(
         objectTypeDefinition: ObjectTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
         visitor.forEach { it.visitObjectType(objectTypeDefinition, context) }
     }
 
     override fun visitUnionType(
         unionTypeDefinition: UnionTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
         visitor.forEach { it.visitUnionType(unionTypeDefinition, context) }
     }
 
     override fun visitEnumType(
         enumTypeDefinition: EnumTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
         visitor.forEach { it.visitEnumType(enumTypeDefinition, context) }
     }
 
     override fun visitInputType(
         inputObjectTypeDefinition: InputObjectTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
         visitor.forEach { it.visitInputType(inputObjectTypeDefinition, context) }
     }
 
     override fun visitInterfaceType(
         interfaceTypeDefinition: InterfaceTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
         visitor.forEach { it.visitInterfaceType(interfaceTypeDefinition, context) }
+    }
+
+    override fun finalize(context: SDLNodeVisitorContext) {
+        visitor.forEach { it.finalize(context) }
     }
 }

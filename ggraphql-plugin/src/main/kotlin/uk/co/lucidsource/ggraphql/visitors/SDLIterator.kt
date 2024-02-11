@@ -12,8 +12,8 @@ import uk.co.lucidsource.ggraphql.util.SDLSortOrder
 class SDLIterator(
     private val visitor: SDLNodeVisitor
 ) {
-    fun iterate(definitions: Collection<SDLDefinition<*>>, context: SDLNodeTransformerContext) {
-        return definitions
+    fun iterate(definitions: Collection<SDLDefinition<*>>, context: SDLNodeVisitorContext) {
+        definitions
             .sortedBy { SDLSortOrder.sortOrder(it) }
             .forEach {
                 when (it) {
@@ -25,5 +25,7 @@ class SDLIterator(
                     else -> throw IllegalArgumentException("Unknown schema type ${it.javaClass}")
                 }
             }
+
+        visitor.finalize(context)
     }
 }

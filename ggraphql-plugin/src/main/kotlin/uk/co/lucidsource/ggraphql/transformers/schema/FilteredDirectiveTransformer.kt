@@ -7,6 +7,10 @@ import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformer
 import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformerContext
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver
 
+/**
+ * Takes an object type field definition annotated with 'filtered' and ads a 'where' clause
+ * taking the auto-generated filter input. Filter inputs a generated from object fields annotated with 'filter'
+ */
 class FilteredDirectiveTransformer : SDLNodeTransformer {
     companion object {
         const val FILTERED_DIRECTIVE = "filtered"

@@ -10,31 +10,35 @@ import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformerContext
 interface SDLNodeVisitor {
     fun visitObjectType(
         objectTypeDefinition: ObjectTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
     }
 
     fun visitUnionType(
         unionTypeDefinition: UnionTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
     }
 
     fun visitEnumType(
         enumTypeDefinition: EnumTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
     }
 
     fun visitInputType(
         inputObjectTypeDefinition: InputObjectTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
     }
 
     fun visitInterfaceType(
         interfaceTypeDefinition: InterfaceTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
+    }
+
+    fun finalize(context: SDLNodeVisitorContext) {
+
     }
 }

@@ -9,22 +9,24 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.TypeVariableName
 import com.squareup.kotlinpoet.asTypeName
 import graphql.language.ObjectTypeDefinition
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
-import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformerContext
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getResolverAspectResolverName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getReturnsGenerateTypeParameterOf
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isExcludedFromCodeGenerationAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isPaginatedAspectApplied
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultDataFetcherName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeUtil
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitor
+import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
 
 class KotlinResolverGenerator(
-    val typeResolver: KotlinTypeResolver
+    private val typeResolver: KotlinTypeResolver
 ) : SDLNodeVisitor {
     private val sharedTypes: MutableMap<String, TypeSpec.Builder> = mutableMapOf()
     private val kotlinTypeSpecs: MutableList<TypeSpec> = mutableListOf()
@@ -93,56 +95,19 @@ class KotlinResolverGenerator(
             .build()
     }
 
-    private fun addSharedPaginator() {
-        if (!sharedTypes.containsKey("PaginatedResult")) {
-            val types = mapOf(
-                "total" to Int::class.asTypeName(),
-                "pageNumber" to Int::class.asTypeName(),
-                "previousCursor" to String::class.asTypeName().copy(nullable = true),
-                "nextCursor" to String::class.asTypeName().copy(nullable = true),
-                "nodes" to List::class.asTypeName().parameterizedBy(TypeVariableName("T"))
-            )
-
-            val properties = types.map {
-                PropertySpec.builder(it.key, it.value)
-                    .initializer(it.key)
-                    .build()
-            }
-
-            val parameters = types.map {
-                ParameterSpec.builder(it.key, it.value).build()
-            }
-
-            sharedTypes["PaginatedResult"] = TypeSpec.classBuilder("PaginatedResult")
-                .primaryConstructor(
-                    FunSpec.constructorBuilder()
-                        .addParameters(parameters)
-                        .build()
-                )
-                .addTypeVariable(TypeVariableName("T"))
-                .addProperty(PropertySpec.builder("total", Int::class.asTypeName()).build())
-                .addProperties(properties)
-        }
-    }
-
     override fun visitObjectType(
         objectTypeDefinition: ObjectTypeDefinition,
-        context: SDLNodeTransformerContext
+        context: SDLNodeVisitorContext
     ) {
         objectTypeDefinition.fieldDefinitions
             .filter { it.getResolverAspectResolverName() != null }
             .forEach { field ->
-                if (field.isPaginatedAspectApplied()) {
-                    addSharedPaginator()
-                }
-
-                val resolverServiceName =
-                    field.getResolverAspectResolverName() ?: (objectTypeDefinition.name + "Resolver")
+                val resolverServiceName = field.getResolverAspectResolverName()!!
                 val resolverService = sharedTypes[resolverServiceName] ?: TypeSpec
                     .interfaceBuilder(resolverServiceName)
 
                 val returnType =
-                    if (field.isPaginatedAspectApplied()) typeResolver.getTypeForName("PaginatedResult")
+                    if (field.isPaginatedAspectApplied()) PaginatedResult::class.asTypeName()
                         .parameterizedBy(
                             typeResolver.getTypeForName(
                                 field.getReturnsGenerateTypeParameterOf()
@@ -179,28 +144,46 @@ class KotlinResolverGenerator(
                     }
                 }
 
-                dataFetcherGet.addCode(
-                    CodeBlock.of(
-                        "return service.%L(%L)",
-                        field.name,
-                        field.inputValueDefinitions.joinToString(", ") { it.name + " = " + it.name }
-                    )
-                )
-
-                resolverService.addFunction(
-                    FunSpec.builder(field.name)
-                        .addModifiers(KModifier.ABSTRACT)
-                        .addParameters(
-                            field.inputValueDefinitions.map {
-                                ParameterSpec.builder(it.name, typeResolver.getKotlinType(it.type))
-                                    .build()
-                            }
+                if (objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
+                    dataFetcherGet.addCode(
+                        CodeBlock.of(
+                            "return service.%L(%L)",
+                            field.name,
+                            field.inputValueDefinitions.joinToString(", ") { it.name + " = " + it.name }
                         )
-                        .returns(returnType)
-                        .build()
-                )
+                    )
+                } else {
+                    dataFetcherGet.addCode(
+                        CodeBlock.of(
+                            "return service.%L(env.getSource<%L>(), %L)",
+                            field.name,
+                            objectTypeDefinition.name,
+                            field.inputValueDefinitions.joinToString(", ") { it.name + " = " + it.name }
+                        )
+                    )
+                }
 
-                kotlinTypeSpecs += TypeSpec.classBuilder(objectTypeDefinition.name + field.name.capitalize() + "DataFetcher")
+                val serviceMethodBuilder = FunSpec.builder(field.name)
+                    .addModifiers(KModifier.ABSTRACT)
+                    .returns(returnType)
+
+                if (!objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
+                    serviceMethodBuilder.addParameter(
+                        objectTypeDefinition.name.replaceFirstChar { it.lowercase() },
+                        typeResolver.getTypeForName(objectTypeDefinition.name)
+                    )
+                }
+
+                field.inputValueDefinitions.map {
+                    ParameterSpec.builder(it.name, typeResolver.getKotlinType(it.type))
+                        .build()
+                }.forEach {
+                    serviceMethodBuilder.addParameter(it)
+                }
+
+                resolverService.addFunction(serviceMethodBuilder.build())
+
+                kotlinTypeSpecs += TypeSpec.classBuilder(objectTypeDefinition.defaultDataFetcherName(field))
                     .addSuperinterface(
                         ClassName.bestGuess(DataFetcher::class.qualifiedName!!)
                             .parameterizedBy(returnType)
@@ -225,7 +208,7 @@ class KotlinResolverGenerator(
 
                 registeredFetchers += RegisteredFetcher(
                     resolverName = resolverServiceName,
-                    dataFetcherName = objectTypeDefinition.name + field.name.capitalize() + "DataFetcher",
+                    dataFetcherName = objectTypeDefinition.defaultDataFetcherName(field),
                     fieldName = field.name,
                     objectTypeName = objectTypeDefinition.name
                 )

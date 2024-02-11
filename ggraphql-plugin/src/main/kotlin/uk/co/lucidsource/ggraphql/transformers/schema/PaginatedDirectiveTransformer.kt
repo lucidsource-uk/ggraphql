@@ -13,8 +13,13 @@ import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyGeneratesResolver
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyReturnsGenerateTypeParameterOf
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isPaginatedAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultResolverName
 import java.math.BigInteger
 
+/**
+ * Takes object type fields annotated with 'paginated' and adds inputs for pagination, as well as changing the output type
+ * to a paginated response.
+ */
 class PaginatedDirectiveTransformer : SDLNodeTransformer {
     companion object {
         const val DEFAULT_PAGE_SIZE = 10L
@@ -77,7 +82,7 @@ class PaginatedDirectiveTransformer : SDLNodeTransformer {
                         )
                         .type(NonNullType(TypeName(paginationResultTypeDefName)))
                         .applyReturnsGenerateTypeParameterOf(field.type)
-                        .applyGeneratesResolverAspect()
+                        .applyGeneratesResolverAspect(objectTypeDefinition.defaultResolverName())
                         .build()
                 }
             }

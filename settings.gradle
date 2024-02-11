@@ -1,5 +1,4 @@
 rootProject.name = 'ggraphql'
 
-include("ggraphql-kotlin")
+include("ggraphql-api")
 include("ggraphql-plugin")
-//include("ggraphql-test")

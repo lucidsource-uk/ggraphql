@@ -1,0 +1,421 @@
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[GraphQLCodeDataFetcherRegistry.kt]=[
+package test
+
+import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLCodeRegistry
+
+public class GraphQLCodeDataFetcherRegistry(
+  public val queryResolver: QueryResolver,
+) {
+  public fun registerResolvers(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
+      GraphQLCodeRegistry.Builder {
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "stuff"),
+        QueryStuffDataFetcher(queryResolver))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "list"),
+        QueryListDataFetcher(queryResolver))
+    return graphQLCodeRegistry
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[IdentifiedEntity.kt]=[
+package test
+
+import kotlin.String
+
+public interface IdentifiedEntity {
+  public val id: String?
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[IdentifiedEntityTypeResolver.kt]=[
+package test
+
+import graphql.TypeResolutionEnvironment
+import graphql.schema.GraphQLObjectType
+import graphql.schema.TypeResolver
+import java.lang.IllegalArgumentException
+
+public class IdentifiedEntityTypeResolver : TypeResolver {
+  override fun getType(env: TypeResolutionEnvironment): GraphQLObjectType {
+
+                val javaObject = env.getObject<Any>()
+                return when(javaObject) {
+            is TestDto -> env.getSchema().getObjectType("TestDto")
+    else -> throw IllegalArgumentException("Unexpected type in type resolver ${javaObject}")
+    }
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[OtherDto.kt]=[
+package test
+
+import kotlin.String
+
+public data class OtherDto(
+  public val id: String?,
+) : Results
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[QueryListDataFetcher.kt]=[
+package test
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import kotlin.Int
+import kotlin.String
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+
+public class QueryListDataFetcher(
+  public val service: QueryResolver,
+) : DataFetcher<PaginatedResult<TestDto>> {
+  override fun `get`(env: DataFetchingEnvironment): PaginatedResult<TestDto> {
+    val where = ObjectMapper().convertValue(env.getArgument("where"), TestDtoFilter::class.java) 
+    val pageSize = ObjectMapper().convertValue(env.getArgument("pageSize"), Int::class.java) 
+    val cursor = ObjectMapper().convertValue(env.getArgument("cursor"), String::class.java) 
+    return service.list(where = where, pageSize = pageSize, cursor = cursor)
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[QueryResolver.kt]=[
+package test
+
+import kotlin.Int
+import kotlin.String
+import kotlin.collections.List
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+
+public interface QueryResolver {
+  public fun stuff(): List<Results>
+
+  public fun list(
+    `where`: TestDtoFilter?,
+    pageSize: Int?,
+    cursor: String?,
+  ): PaginatedResult<TestDto>
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[QueryStuffDataFetcher.kt]=[
+package test
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import kotlin.collections.List
+
+public class QueryStuffDataFetcher(
+  public val service: QueryResolver,
+) : DataFetcher<List<Results>> {
+  override fun `get`(env: DataFetchingEnvironment): List<Results> = service.stuff()
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[Results.kt]=[
+package test
+
+public interface Results
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[ResultsTypeResolver.kt]=[
+package test
+
+import graphql.TypeResolutionEnvironment
+import graphql.schema.GraphQLObjectType
+import graphql.schema.TypeResolver
+import java.lang.IllegalArgumentException
+
+public class ResultsTypeResolver : TypeResolver {
+  override fun getType(env: TypeResolutionEnvironment): GraphQLObjectType {
+
+                val javaObject = env.getObject<Any>()
+                return when(javaObject) {
+            is TestDto -> env.getSchema().getObjectType("TestDto")
+    is OtherDto -> env.getSchema().getObjectType("OtherDto")
+    else -> throw IllegalArgumentException("Unexpected type in type resolver ${javaObject}")
+    }
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDto.kt]=[
+package test
+
+import kotlin.Int
+import kotlin.String
+
+public data class TestDto(
+  override val id: String?,
+  public val name: String,
+  public val age: Int,
+) : IdentifiedEntity, Results
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDtoAgeFilterCriteria.kt]=[
+package test
+
+import com.fasterxml.jackson.`annotation`.JsonCreator
+import com.fasterxml.jackson.`annotation`.JsonProperty
+import kotlin.Int
+import uk.co.lucidsource.ggraphql.api.filtering.FilterOperator
+import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
+import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterUnaryExpression
+import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
+
+public data class TestDtoAgeFilterCriteria @JsonCreator constructor(
+  @JsonProperty("eq")
+  public val eq: Int?,
+  @JsonProperty("gt")
+  public val gt: Int?,
+  @JsonProperty("gtEq")
+  public val gtEq: Int?,
+  @JsonProperty("lt")
+  public val lt: Int?,
+  @JsonProperty("ltEq")
+  public val ltEq: Int?,
+) : FilterExpression {
+  override fun ast(): Expression {
+
+                        if (`eq` != null) {
+                            return FilterUnaryExpression(field = "age", operator =
+        FilterOperator.EQ, value = `eq`)
+                        }
+                
+                        if (`gt` != null) {
+                            return FilterUnaryExpression(field = "age", operator =
+        FilterOperator.GT, value = `gt`)
+                        }
+                
+                        if (`gtEq` != null) {
+                            return FilterUnaryExpression(field = "age", operator =
+        FilterOperator.GT_EQ, value = `gtEq`)
+                        }
+                
+                        if (`lt` != null) {
+                            return FilterUnaryExpression(field = "age", operator =
+        FilterOperator.LT, value = `lt`)
+                        }
+                
+                        if (`ltEq` != null) {
+                            return FilterUnaryExpression(field = "age", operator =
+        FilterOperator.LT_EQ, value = `ltEq`)
+                        }
+                return Expression.EMPTY_EXPRESSION
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDtoFilter.kt]=[
+package test
+
+import com.fasterxml.jackson.`annotation`.JsonCreator
+import com.fasterxml.jackson.`annotation`.JsonProperty
+import kotlin.collections.List
+import uk.co.lucidsource.ggraphql.api.filtering.FilterGroupOperator
+import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
+import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterGroupCompoundExpression
+import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
+
+public data class TestDtoFilter @JsonCreator constructor(
+  @JsonProperty("all")
+  public val all: List<TestDtoFilterCriteria>?,
+  @JsonProperty("not")
+  public val not: List<TestDtoFilterCriteria>?,
+  @JsonProperty("any")
+  public val any: List<TestDtoFilterCriteria>?,
+) : FilterExpression {
+  override fun ast(): Expression {
+    val all = FilterGroupCompoundExpression(FilterGroupOperator.ALL, all?.map { it.ast() }?.filter {
+        it != Expression.EMPTY_EXPRESSION } ?: emptyList())
+    val not = FilterGroupCompoundExpression(FilterGroupOperator.NOT, not?.map { it.ast() }?.filter {
+        it != Expression.EMPTY_EXPRESSION } ?: emptyList())
+    val any = FilterGroupCompoundExpression(FilterGroupOperator.ANY, any?.map { it.ast() }?.filter {
+        it != Expression.EMPTY_EXPRESSION } ?: emptyList())
+
+                  val filters = listOf(all,not,any).filter{ it.expressions.isNotEmpty() }
+                  if(filters.isEmpty()) {
+                      return Expression.EMPTY_EXPRESSION
+                  }
+                  return FilterGroupCompoundExpression(FilterGroupOperator.ALL, filters)
+                
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDtoFilterCriteria.kt]=[
+package test
+
+import com.fasterxml.jackson.`annotation`.JsonCreator
+import com.fasterxml.jackson.`annotation`.JsonProperty
+import uk.co.lucidsource.ggraphql.api.filtering.FilterGroupOperator
+import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
+import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterGroupCompoundExpression
+import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
+
+public data class TestDtoFilterCriteria @JsonCreator constructor(
+  @JsonProperty("name")
+  public val name: TestDtoNameFilterCriteria?,
+  @JsonProperty("age")
+  public val age: TestDtoAgeFilterCriteria?,
+) : FilterExpression {
+  override fun ast(): Expression {
+    val fieldExpressions = listOf(name,age).filterNotNull().map { it.ast() }.filter { it !=
+        Expression.EMPTY_EXPRESSION }
+    if(fieldExpressions.isEmpty()) {
+        return Expression.EMPTY_EXPRESSION
+    }
+    return FilterGroupCompoundExpression(FilterGroupOperator.ALL, fieldExpressions)
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TestDtoNameFilterCriteria.kt]=[
+package test
+
+import com.fasterxml.jackson.`annotation`.JsonCreator
+import com.fasterxml.jackson.`annotation`.JsonProperty
+import kotlin.String
+import uk.co.lucidsource.ggraphql.api.filtering.FilterOperator
+import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
+import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterUnaryExpression
+import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
+
+public data class TestDtoNameFilterCriteria @JsonCreator constructor(
+  @JsonProperty("eq")
+  public val eq: String?,
+) : FilterExpression {
+  override fun ast(): Expression {
+
+                        if (`eq` != null) {
+                            return FilterUnaryExpression(field = "name", operator =
+        FilterOperator.EQ, value = `eq`)
+                        }
+                return Expression.EMPTY_EXPRESSION
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[TypeResolverWiring.kt]=[
+package test
+
+import graphql.schema.idl.RuntimeWiring
+import graphql.schema.idl.TypeRuntimeWiring
+
+public object TypeResolverWiring {
+  public fun wireTypeResolvers(wiring: RuntimeWiring.Builder): RuntimeWiring.Builder {
+
+                wiring.type(
+                    TypeRuntimeWiring.newTypeWiring("Results")
+                        .typeResolver(ResultsTypeResolver()).build()
+                )
+                
+                wiring.type(
+                    TypeRuntimeWiring.newTypeWiring("IdentifiedEntity")
+                        .typeResolver(IdentifiedEntityTypeResolver()).build()
+                )
+                return wiring
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[generated-files]=[
+TypeResolverWiring.kt,TestDtoNameFilterCriteria.kt,TestDtoAgeFilterCriteria.kt,TestDto.kt,ResultsTypeResolver.kt,GraphQLCodeDataFetcherRegistry.kt,QueryListDataFetcher.kt,TestDtoFilter.kt,Results.kt,QueryStuffDataFetcher.kt,QueryResolver.kt,TestDtoFilterCriteria.kt,IdentifiedEntityTypeResolver.kt,OtherDto.kt,IdentifiedEntity.kt
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[schema.graphql]=[
+interface IdentifiedEntity {
+  id: String
+}
+
+union Results = OtherDto | TestDto
+
+type OtherDto {
+  id: String
+}
+
+type Query {
+  list(cursor: String, pageSize: Int = 10, where: TestDtoFilter): TestDtoPaginatedResult!
+  stuff: [Results!]!
+}
+
+type TestDto implements IdentifiedEntity {
+  age: Int!
+  id: String
+  name: String!
+}
+
+type TestDtoPaginatedResult {
+  nextCursor: String
+  nodes: [TestDto!]!
+  pageNumber: Int!
+  previousCursor: String
+  total: Int!
+}
+
+enum FilterOperator {
+  EQ
+  GT
+  GT_EQ
+  IN
+  LIKE
+  LT
+  LT_EQ
+}
+
+input TestDtoAgeFilterCriteria {
+  eq: Int
+  gt: Int
+  gtEq: Int
+  lt: Int
+  ltEq: Int
+}
+
+input TestDtoFilter {
+  all: [TestDtoFilterCriteria!]
+  any: [TestDtoFilterCriteria!]
+  not: [TestDtoFilterCriteria!]
+}
+
+input TestDtoFilterCriteria {
+  age: TestDtoAgeFilterCriteria
+  name: TestDtoNameFilterCriteria
+}
+
+input TestDtoNameFilterCriteria {
+  eq: String
+}
+
+]

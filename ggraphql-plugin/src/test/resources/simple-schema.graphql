@@ -1,0 +1,37 @@
+
+enum FilterOperator {
+    EQ
+    LIKE
+    IN
+    GT,
+    GT_EQ
+    LT
+    LT_EQ
+}
+
+directive @ignore on OBJECT
+directive @resolver(name: String) on FIELD_DEFINITION
+directive @filter(operators: [FilterOperator!]!) on FIELD_DEFINITION
+directive @filtered on FIELD_DEFINITION
+directive @paginated on FIELD_DEFINITION
+
+union Results = TestDto | OtherDto
+
+type Query {
+    list: [TestDto!]! @filtered @paginated
+    stuff: [Results!]!
+}
+
+type TestDto implements IdentifiedEntity {
+    id: String
+    name: String! @filter(operators: [EQ])
+    age: Int! @filter(operators: [EQ, GT, GT_EQ, LT, LT_EQ])
+}
+
+type OtherDto {
+    id: String
+}
+
+interface IdentifiedEntity {
+    id: String
+}

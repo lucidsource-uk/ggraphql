@@ -3,8 +3,10 @@ package uk.co.lucidsource.ggraphql.transformers.schema
 import graphql.language.ObjectTypeDefinition
 import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformer
 import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformerContext
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyExcludeFromCodeGenerationAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyGeneratesResolverAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getResolverAspectResolverName
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultResolverName
 
 class ResolvedDirectiveTransformer : SDLNodeTransformer {
     override fun transformObjectType(
@@ -17,7 +19,8 @@ class ResolvedDirectiveTransformer : SDLNodeTransformer {
                         .filter { it.getResolverAspectResolverName() == null }
                         .map { field ->
                             field.transform { fieldBuilder ->
-                                fieldBuilder.applyGeneratesResolverAspect().build()
+                                fieldBuilder.applyGeneratesResolverAspect(objectTypeDefinition.defaultResolverName())
+                                    .build()
                             }
                         }
 
@@ -26,7 +29,9 @@ class ResolvedDirectiveTransformer : SDLNodeTransformer {
                         it.getResolverAspectResolverName() != null
                     })
 
-                objectBuilder.build()
+                objectBuilder
+                    .applyExcludeFromCodeGenerationAspect()
+                    .build()
             }
         }
 

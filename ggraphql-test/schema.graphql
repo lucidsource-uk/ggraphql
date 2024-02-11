@@ -10,7 +10,7 @@ type Candidate implements IdentifiedEntity {
     id: String @filter(operators: [EQ])
     lastname: String! @filter(operators: [LIKE])
     status: CandidateStatus!
-    tags: [String!]
+    tags: [String!] @filter(operators: [IN])
 }
 
 type CandidateStatusAggregation {
@@ -52,9 +52,9 @@ type Mutation {
 
 #"Query root"
 type QueryT {
-    aggregateByStatus: CandidateStatusAggregation! @resolver(name: "StatsResolver")
+    aggregateByStatus: CandidateStatusAggregation!
     candidate(candidateId: String!): Candidate @resolver(name: "CandidateResolver")
-    candidates: [Candidate!]! @paginated @filtered @resolver(name: "CandidateResolver")
+    candidates: [Candidate!]! @paginated @filtered
 }
 
 type SuccessResponse {

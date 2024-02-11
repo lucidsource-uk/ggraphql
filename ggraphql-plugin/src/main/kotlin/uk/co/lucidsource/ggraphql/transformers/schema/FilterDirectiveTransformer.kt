@@ -6,22 +6,27 @@ import graphql.language.FieldDefinition
 import graphql.language.InputObjectTypeDefinition
 import graphql.language.InputValueDefinition
 import graphql.language.ListType
+import graphql.language.NonNullType
 import graphql.language.ObjectTypeDefinition
 import graphql.language.TypeName
-import uk.co.lucidsource.ggraphql.model.FilterOperator
+import uk.co.lucidsource.ggraphql.api.filtering.FilterGroupOperator
+import uk.co.lucidsource.ggraphql.api.filtering.FilterOperator
 import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformer
 import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformerContext
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyFilterFieldNameForTypeAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyFilterForTypeAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeUtil
 
+/**
+ * Takes a GraphQL schema object types and expands the use of 'filter' annotations into
+ * input types to build a filter query.
+ */
 class FilterDirectiveTransformer : SDLNodeTransformer {
     companion object {
         const val FILTER_DIRECTIVE = "filter"
         const val FILTER_DIRECTIVE_OPERATORS = "operators"
-        const val FILTER_FIELD_OR = "any"
-        const val FILTER_FIELD_AND = "all"
-        const val FILTER_FIELD_NOT = "not"
     }
 
     override fun transformObjectType(
@@ -48,7 +53,8 @@ class FilterDirectiveTransformer : SDLNodeTransformer {
                             else GraphQLTypeUtil.unwrapType(fieldOperators.key.type)
                         ).build()
                     })
-                    .applyFilterForTypeAspect(objectTypeDefinition)
+                    .applyFilterForTypeAspect(GraphQLTypeAspects.FilterAspectType.FIELD_CRITERIA)
+                    .applyFilterFieldNameForTypeAspect(fieldName)
                     .build()
             }.toMap()
 
@@ -59,31 +65,23 @@ class FilterDirectiveTransformer : SDLNodeTransformer {
             .inputValueDefinitions(filterFieldInputTypes.map {
                 InputValueDefinition.newInputValueDefinition().name(it.key).type(TypeName(it.value.name)).build()
             })
-            .applyFilterForTypeAspect(objectTypeDefinition)
+            .applyFilterForTypeAspect(GraphQLTypeAspects.FilterAspectType.OBJECT_CRITERIA)
             .build()
 
-        // Generates a filter in the form of { any: [FilterCriteria], all: [FilterCriteria], not:[FilterCriteria] }
+        // Generates a filter in the form of { any: [FilterCriteria], not:[FilterCriteria] }
         val filterCriteriaObjectType =
-            ListType(TypeName(GraphQLTypeNameResolver.getFilterCriteriaTypeDefName(objectTypeDefinition)))
+            ListType(NonNullType(TypeName(GraphQLTypeNameResolver.getFilterCriteriaTypeDefName(objectTypeDefinition))))
 
         val filterObjectTypeDef = InputObjectTypeDefinition.newInputObjectDefinition()
             .name(GraphQLTypeNameResolver.getFilterTypeDefName(objectTypeDefinition)).inputValueDefinitions(
-                listOf(
+                FilterGroupOperator.entries.map {
                     InputValueDefinition.newInputValueDefinition()
-                        .name(uk.co.lucidsource.ggraphql.transformers.schema.FilterDirectiveTransformer.Companion.FILTER_FIELD_AND)
-                        .type(filterCriteriaObjectType)
-                        .build(),
-                    InputValueDefinition.newInputValueDefinition()
-                        .name(uk.co.lucidsource.ggraphql.transformers.schema.FilterDirectiveTransformer.Companion.FILTER_FIELD_OR)
-                        .type(filterCriteriaObjectType)
-                        .build(),
-                    InputValueDefinition.newInputValueDefinition()
-                        .name(uk.co.lucidsource.ggraphql.transformers.schema.FilterDirectiveTransformer.Companion.FILTER_FIELD_NOT)
+                        .name(it.fieldName)
                         .type(filterCriteriaObjectType)
                         .build()
-                )
+                }
             )
-            .applyFilterForTypeAspect(objectTypeDefinition)
+            .applyFilterForTypeAspect(GraphQLTypeAspects.FilterAspectType.EXPRESSION)
             .build()
 
         (filterFieldInputTypes.values + filterObjectTypeDef + filterCriteriaObjectTypeDef).forEach {
@@ -94,13 +92,13 @@ class FilterDirectiveTransformer : SDLNodeTransformer {
     }
 
     private fun getFilterOperators(typeDef: ObjectTypeDefinition): Map<FieldDefinition, List<FilterOperator>> {
-        return typeDef.fieldDefinitions.filter { it.hasDirective(uk.co.lucidsource.ggraphql.transformers.schema.FilterDirectiveTransformer.Companion.FILTER_DIRECTIVE) }
+        return typeDef.fieldDefinitions.filter { it.hasDirective(FILTER_DIRECTIVE) }
             .associate { field ->
                 val filterDirective =
-                    field.getDirectives(uk.co.lucidsource.ggraphql.transformers.schema.FilterDirectiveTransformer.Companion.FILTER_DIRECTIVE)
+                    field.getDirectives(FILTER_DIRECTIVE)
                         .first()
                 val arguments =
-                    filterDirective.getArgument(uk.co.lucidsource.ggraphql.transformers.schema.FilterDirectiveTransformer.Companion.FILTER_DIRECTIVE_OPERATORS).value as? ArrayValue
+                    filterDirective.getArgument(FILTER_DIRECTIVE_OPERATORS).value as? ArrayValue
                 val operators = (arguments?.values as? List<*>)?.filterIsInstance<EnumValue>()?.map {
                     FilterOperator.valueOf(it.name)
                 }
@@ -115,6 +113,6 @@ class FilterDirectiveTransformer : SDLNodeTransformer {
     }
 
     private fun shouldProcess(typeDef: ObjectTypeDefinition): Boolean {
-        return typeDef.fieldDefinitions.any { it.hasDirective(uk.co.lucidsource.ggraphql.transformers.schema.FilterDirectiveTransformer.Companion.FILTER_DIRECTIVE) }
+        return typeDef.fieldDefinitions.any { it.hasDirective(FILTER_DIRECTIVE) }
     }
 }

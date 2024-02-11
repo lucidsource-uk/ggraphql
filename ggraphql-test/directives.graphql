@@ -11,7 +11,7 @@ enum FilterOperator {
 }
 
 directive @ignore on OBJECT
-directive @resolver(name: String) on FIELD_DEFINITION
+directive @resolver(name: String!) on FIELD_DEFINITION
 directive @filter(operators: [FilterOperator!]!) on FIELD_DEFINITION
 directive @filtered on FIELD_DEFINITION
 directive @paginated on FIELD_DEFINITION
