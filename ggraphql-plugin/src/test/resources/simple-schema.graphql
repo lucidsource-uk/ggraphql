@@ -9,11 +9,14 @@ enum FilterOperator {
     LT_EQ
 }
 
+directive @scalarType(type: String) on SCALAR
 directive @ignore on OBJECT
 directive @resolver(name: String) on FIELD_DEFINITION
 directive @filter(operators: [FilterOperator!]!) on FIELD_DEFINITION
 directive @filtered on FIELD_DEFINITION
 directive @paginated on FIELD_DEFINITION
+
+scalar DateTime @scalarType(type: "java.util.Date")
 
 union Results = TestDto | OtherDto
 
@@ -27,6 +30,7 @@ type TestDto implements IdentifiedEntity {
     name: String! @filter(operators: [EQ])
     age: Int! @filter(operators: [EQ, GT, GT_EQ, LT, LT_EQ])
     results: [Results!]! @paginated
+    createAt: DateTime
 }
 
 type OtherDto {

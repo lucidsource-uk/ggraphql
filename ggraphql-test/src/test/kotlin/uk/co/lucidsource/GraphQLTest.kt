@@ -28,7 +28,6 @@ import uk.co.lucidsource.generated.wiring.TypeResolverWiring
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 import java.io.File
 import java.util.Date
-import java.util.UUID
 
 @ExtendWith(value = [SnapshotExtension::class])
 class GraphQLTest {

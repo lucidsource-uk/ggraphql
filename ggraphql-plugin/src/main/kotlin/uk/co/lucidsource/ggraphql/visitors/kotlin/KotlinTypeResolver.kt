@@ -6,6 +6,8 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
 import graphql.language.ListType
 import graphql.language.NonNullType
+import graphql.language.ScalarTypeDefinition
+import graphql.language.StringValue
 import graphql.language.Type
 import kotlin.reflect.KClass
 
@@ -21,6 +23,16 @@ class KotlinTypeResolver(
             "Boolean" to Boolean::class,
             "ID" to String::class
         )
+
+        fun fromScalars(packageName: String, scalars: List<ScalarTypeDefinition>): KotlinTypeResolver {
+            val additionalTypes = scalars.filter { it.hasDirective("scalarType") }
+                .map {
+                    val type = it.getDirectives("scalarType").first().argumentsByName["type"]!!.value as StringValue
+                    it.name to Class.forName(type.value).kotlin
+                }.toMap()
+
+            return KotlinTypeResolver(packageName, additionalTypes)
+        }
     }
 
     private val resolvableTypes = STANDARD_TYPES + additionalTypes

@@ -10,6 +10,7 @@ enum FilterOperator {
     LT_EQ
 }
 
+directive @scalarType(type: String) on SCALAR
 directive @ignore on OBJECT
 directive @resolver(name: String!) on FIELD_DEFINITION
 directive @filter(operators: [FilterOperator!]!) on FIELD_DEFINITION

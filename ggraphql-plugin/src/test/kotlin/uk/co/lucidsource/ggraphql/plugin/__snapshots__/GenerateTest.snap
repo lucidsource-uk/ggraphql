@@ -103,6 +103,7 @@ public interface Results
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDto.kt]=[
 package test.models
 
+import java.util.Date
 import kotlin.Int
 import kotlin.String
 
@@ -110,6 +111,7 @@ public data class TestDto(
   override val id: String?,
   public val name: String,
   public val age: Int,
+  public val createAt: Date?,
 ) : IdentifiedEntity, Results
 
 ]
@@ -443,6 +445,7 @@ type ResultsPaginatedResult {
 
 type TestDto implements IdentifiedEntity {
   age: Int!
+  createAt: DateTime
   id: String
   name: String!
   results(cursor: String, pageSize: Int = 10): ResultsPaginatedResult!
@@ -465,6 +468,8 @@ enum FilterOperator {
   LT
   LT_EQ
 }
+
+scalar DateTime
 
 input TestDtoAgeFilterCriteria {
   eq: Int

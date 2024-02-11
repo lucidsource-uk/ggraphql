@@ -1,1 +1,1 @@
-scalar DateTime
+scalar DateTime @scalarType(type: "java.util.Date")
