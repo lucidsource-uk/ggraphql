@@ -9,26 +9,25 @@ import graphql.language.NonNullType
 import graphql.language.ScalarTypeDefinition
 import graphql.language.StringValue
 import graphql.language.Type
-import kotlin.reflect.KClass
 
 class KotlinTypeResolver(
     private val basePackageName: String,
-    additionalTypes: Map<String, KClass<*>> = mapOf()
+    additionalTypes: Map<String, TypeName> = mapOf()
 ) {
     companion object {
         val STANDARD_TYPES = mapOf(
-            "String" to String::class,
-            "Int" to Int::class,
-            "Float" to Float::class,
-            "Boolean" to Boolean::class,
-            "ID" to String::class
+            "String" to String::class.asTypeName(),
+            "Int" to Int::class.asTypeName(),
+            "Float" to Float::class.asTypeName(),
+            "Boolean" to Boolean::class.asTypeName(),
+            "ID" to String::class.asTypeName()
         )
 
         fun fromScalars(packageName: String, scalars: List<ScalarTypeDefinition>): KotlinTypeResolver {
             val additionalTypes = scalars.filter { it.hasDirective("scalarType") }
                 .map {
                     val type = it.getDirectives("scalarType").first().argumentsByName["type"]!!.value as StringValue
-                    it.name to Class.forName(type.value).kotlin
+                    it.name to ClassName.bestGuess(type.value)
                 }.toMap()
 
             return KotlinTypeResolver(packageName, additionalTypes)
@@ -90,7 +89,7 @@ class KotlinTypeResolver(
             ?: throw IllegalArgumentException("Unexpected type $baseType")
 
         if (resolvableTypes.containsKey(graphqlNamedType.name)) {
-            return ClassName.bestGuess(resolvableTypes[graphqlNamedType.name]!!.qualifiedName!!)
+            return resolvableTypes[graphqlNamedType.name]!!
                 .copy(nullable = isNullable)
         }
 

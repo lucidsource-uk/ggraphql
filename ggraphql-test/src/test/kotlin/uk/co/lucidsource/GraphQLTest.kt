@@ -74,8 +74,8 @@ class GraphQLTest {
         val candidates: MutableList<Candidate>,
         val changesLogs: MutableList<ChangeLog>
     ) : CandidateResolver {
-        override fun audits(pageSize: Int?, cursor: String?, candidate: Candidate): PaginatedResult<ChangeLog, String> {
-            return PaginatedResult(nodes = changesLogs, pageNumber = 1, total = changesLogs.size)
+        override fun audits(pageSize: Int?, cursor: String?, candidate: Candidate): PaginatedResult<ChangeLog, SimpleToken> {
+            return PaginatedResult(nodes = changesLogs, pageNumber = 1, total = changesLogs.size, nextCursor = SimpleToken("sdsd"))
         }
 
         override fun persistCandidate(candidate: CandidateInput): Candidate {
@@ -130,7 +130,7 @@ class GraphQLTest {
             where: CandidateFilter?,
             pageSize: Int?,
             cursor: String?
-        ): PaginatedResult<Candidate, String> {
+        ): PaginatedResult<Candidate, SimpleToken> {
             return PaginatedResult(nodes = candidates, pageNumber = 1, total = candidates.size)
         }
     }
@@ -179,7 +179,7 @@ class GraphQLTest {
         val graphQL = buildSchema(CANDIDATES.toMutableList(), CHANGE_LOGS.toMutableList())
 
         val result =
-            graphQL.execute("""{ candidate(candidateId: "1") { audits { nodes { changes { ... on ChangeItemValue { left, right, property } ... on ChangeItemList { leftValues, property, rightValues } } } } } }""")
+            graphQL.execute("""{ candidate(candidateId: "1") { audits { nextCursor, nodes { changes { ... on ChangeItemValue { left, right, property } ... on ChangeItemList { leftValues, property, rightValues } } } } } }""")
 
         expect.toMatchSnapshot(result)
     }

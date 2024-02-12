@@ -17,7 +17,7 @@ directive @filtered on FIELD_DEFINITION
 directive @paginated on FIELD_DEFINITION
 
 scalar DateTime @scalarType(type: "java.util.Date")
-scalar PaginationCursor @scalarType(type: "java.lang.String")
+scalar PaginationCursor @scalarType(type: "co.uk.somepackage.UnknownType")
 
 union Results = TestDto | OtherDto
 

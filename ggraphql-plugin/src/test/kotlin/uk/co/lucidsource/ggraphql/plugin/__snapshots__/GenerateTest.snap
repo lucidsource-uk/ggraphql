@@ -48,6 +48,7 @@ public class ParentNestedChildrenDataFetcher(
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/ParentNestedPaginatedKidsDataFetcher.kt]=[
 package test.datafetchers
 
+import co.uk.somepackage.UnknownType
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
@@ -62,9 +63,9 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class ParentNestedPaginatedKidsDataFetcher(
   public val service: ParentNestedResolver,
   public val deserializer: Deserializer,
-) : DataFetcher<CompletableFuture<PaginatedResult<ChildNested, String>>> {
+) : DataFetcher<CompletableFuture<PaginatedResult<ChildNested, UnknownType>>> {
   override fun `get`(env: DataFetchingEnvironment):
-      CompletableFuture<PaginatedResult<ChildNested, String>> {
+      CompletableFuture<PaginatedResult<ChildNested, UnknownType>> {
     val pageSize = env.getArgument("pageSize") as Int? 
     val cursor = env.getArgument("cursor") as String? 
     return CompletableFuture.supplyAsync { service.paginatedKids(parentNested =
@@ -103,6 +104,7 @@ public class QueryAnotherOneMethodDataFetcher(
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/QueryListDataFetcher.kt]=[
 package test.datafetchers
 
+import co.uk.somepackage.UnknownType
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
@@ -117,9 +119,9 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class QueryListDataFetcher(
   public val service: QueryResolver,
   public val deserializer: Deserializer,
-) : DataFetcher<CompletableFuture<PaginatedResult<TestDto, String>>> {
+) : DataFetcher<CompletableFuture<PaginatedResult<TestDto, UnknownType>>> {
   override fun `get`(env: DataFetchingEnvironment):
-      CompletableFuture<PaginatedResult<TestDto, String>> {
+      CompletableFuture<PaginatedResult<TestDto, UnknownType>> {
     val where = env.getArgument<Any>("where")?.let { deserializer.deserialize(it,
         TestDtoFilter::class.java) } 
     val pageSize = env.getArgument("pageSize") as Int? 
@@ -182,6 +184,7 @@ public class QueryStuffDataFetcher(
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/TestDtoResultsDataFetcher.kt]=[
 package test.datafetchers
 
+import co.uk.somepackage.UnknownType
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
@@ -196,9 +199,9 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class TestDtoResultsDataFetcher(
   public val service: TestDtoResolver,
   public val deserializer: Deserializer,
-) : DataFetcher<CompletableFuture<PaginatedResult<Results, String>>> {
+) : DataFetcher<CompletableFuture<PaginatedResult<Results, UnknownType>>> {
   override fun `get`(env: DataFetchingEnvironment):
-      CompletableFuture<PaginatedResult<Results, String>> {
+      CompletableFuture<PaginatedResult<Results, UnknownType>> {
     val pageSize = env.getArgument("pageSize") as Int? 
     val cursor = env.getArgument("cursor") as String? 
     return CompletableFuture.supplyAsync { service.results(testDto = env.getSource<TestDto>(),
@@ -509,6 +512,7 @@ public interface NodeResolver {
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/ParentNestedResolver.kt]=[
 package test.resolvers
 
+import co.uk.somepackage.UnknownType
 import kotlin.Int
 import kotlin.String
 import test.models.ChildNested
@@ -520,7 +524,7 @@ public interface ParentNestedResolver {
     pageSize: Int?,
     cursor: String?,
     parentNested: ParentNested,
-  ): PaginatedResult<ChildNested, String>
+  ): PaginatedResult<ChildNested, UnknownType>
 }
 
 ]
@@ -529,6 +533,7 @@ public interface ParentNestedResolver {
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/QueryResolver.kt]=[
 package test.resolvers
 
+import co.uk.somepackage.UnknownType
 import kotlin.Int
 import kotlin.String
 import kotlin.collections.List
@@ -549,7 +554,7 @@ public interface QueryResolver {
     `where`: TestDtoFilter?,
     pageSize: Int?,
     cursor: String?,
-  ): PaginatedResult<TestDto, String>
+  ): PaginatedResult<TestDto, UnknownType>
 }
 
 ]
@@ -558,6 +563,7 @@ public interface QueryResolver {
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/TestDtoResolver.kt]=[
 package test.resolvers
 
+import co.uk.somepackage.UnknownType
 import kotlin.Int
 import kotlin.String
 import test.models.Results
@@ -569,7 +575,7 @@ public interface TestDtoResolver {
     pageSize: Int?,
     cursor: String?,
     testDto: TestDto,
-  ): PaginatedResult<Results, String>
+  ): PaginatedResult<Results, UnknownType>
 }
 
 ]
