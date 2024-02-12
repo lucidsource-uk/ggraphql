@@ -19,10 +19,10 @@ type Candidate implements IdentifiedEntity {
 }
 
 type CandidatePaginatedResult {
-  nextCursor: String
+  nextCursor: PaginationCursor
   nodes: [Candidate!]!
   pageNumber: Int!
-  previousCursor: String
+  previousCursor: PaginationCursor
   total: Int!
 }
 
@@ -53,10 +53,10 @@ type ChangeLog {
 }
 
 type ChangeLogPaginatedResult {
-  nextCursor: String
+  nextCursor: PaginationCursor
   nodes: [ChangeLog!]!
   pageNumber: Int!
-  previousCursor: String
+  previousCursor: PaginationCursor
   total: Int!
 }
 
@@ -71,6 +71,9 @@ type QueryT {
   aggregateByStatus: CandidateStatusAggregation!
   candidate(candidateId: String!): Candidate
   candidates(cursor: String, pageSize: Int = 10, where: CandidateFilter): CandidatePaginatedResult!
+  testNonNullArgument(input: CandidateInput!, int: Int!): String
+  testNullArgument(input: CandidateInput, int: Int): String
+  testSingleArgument(input: CandidateInput!): String
 }
 
 type SuccessResponse {
@@ -107,6 +110,8 @@ enum FilterOperator {
 }
 
 scalar DateTime
+
+scalar PaginationCursor
 
 input CandidateFilter {
   all: [CandidateFilterCriteria!]

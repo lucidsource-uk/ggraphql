@@ -2,9 +2,14 @@ package uk.co.lucidsource
 
 import au.com.origin.snapshots.Expect
 import au.com.origin.snapshots.junit5.SnapshotExtension
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import graphql.GraphQL
+import graphql.Scalars
+import graphql.execution.AsyncExecutionStrategy
 import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLCodeRegistry.newCodeRegistry
+import graphql.schema.GraphQLScalarType
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
@@ -24,8 +29,10 @@ import uk.co.lucidsource.generated.resolvers.GraphQLCodeDataFetcherRegistry
 import uk.co.lucidsource.generated.resolvers.QueryTResolver
 import uk.co.lucidsource.generated.models.SuccessResponse
 import uk.co.lucidsource.generated.models.User
+import uk.co.lucidsource.generated.resolvers.UserResolver
 import uk.co.lucidsource.generated.wiring.TypeResolverWiring
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 import java.io.File
 import java.util.Date
 
@@ -58,8 +65,7 @@ class GraphQLTest {
                     ChangeItemValue(left = "john", property = "firstname", right = "doe")
                 ),
                 time = Date(),
-                type = ChangeLogType.CREATED,
-                user = User(id = "1", email = "test@tst.com", avatarUrl = null)
+                type = ChangeLogType.CREATED
             )
         )
     }
@@ -68,7 +74,7 @@ class GraphQLTest {
         val candidates: MutableList<Candidate>,
         val changesLogs: MutableList<ChangeLog>
     ) : CandidateResolver {
-        override fun audits(pageSize: Int?, cursor: String?, candidate: Candidate): PaginatedResult<ChangeLog> {
+        override fun audits(pageSize: Int?, cursor: String?, candidate: Candidate): PaginatedResult<ChangeLog, String> {
             return PaginatedResult(nodes = changesLogs, pageNumber = 1, total = changesLogs.size)
         }
 
@@ -108,8 +114,30 @@ class GraphQLTest {
             )
         }
 
-        override fun candidates(where: CandidateFilter?, pageSize: Int?, cursor: String?): PaginatedResult<Candidate> {
+        override fun testNullArgument(input: CandidateInput?, int: Int?): String? {
+            return "worked"
+        }
+
+        override fun testNonNullArgument(input: CandidateInput, int: Int): String? {
+            return "worked"
+        }
+
+        override fun testSingleArgument(input: CandidateInput): String? {
+            return "worked"
+        }
+
+        override fun candidates(
+            where: CandidateFilter?,
+            pageSize: Int?,
+            cursor: String?
+        ): PaginatedResult<Candidate, String> {
             return PaginatedResult(nodes = candidates, pageNumber = 1, total = candidates.size)
+        }
+    }
+
+    class MockUserResolver : UserResolver {
+        override fun user(changeLog: ChangeLog): User? {
+            return User(id = "1", email = "test@emai.com", avatarUrl = null)
         }
     }
 
@@ -117,22 +145,33 @@ class GraphQLTest {
         val typeDefinitionRegistry = SchemaParser()
             .parse(File("src/test/resources/schema.graphql"))
 
+        val deserializer = object : Deserializer {
+            override fun <O> deserialize(input: Any, clazz: Class<O>): O {
+                return ObjectMapper().registerKotlinModule().convertValue(input, clazz)
+            }
+        }
+
         val wiring = RuntimeWiring.newRuntimeWiring()
             .codeRegistry(
                 GraphQLCodeDataFetcherRegistry(
                     candidateResolver = MockCandidateResolver(candidates, changeLogs),
-                    queryTResolver = MockQueryResolver(candidates)
+                    queryTResolver = MockQueryResolver(candidates),
+                    userResolver = MockUserResolver(),
+                    deserializer = deserializer
                 ).registerResolvers(newCodeRegistry()).build()
             )
 
         wiring.scalar(ExtendedScalars.DateTime)
+        wiring.scalar(GraphQLScalarType.newScalar(Scalars.GraphQLString).name("PaginationCursor").build())
 
         TypeResolverWiring.wireTypeResolvers(wiring)
 
         val schema = SchemaGenerator()
             .makeExecutableSchema(typeDefinitionRegistry, wiring.build())
 
-        return GraphQL.newGraphQL(schema).build()
+        return GraphQL.newGraphQL(schema)
+            .queryExecutionStrategy(AsyncExecutionStrategy())
+            .build()
     }
 
     @Test
@@ -166,6 +205,36 @@ class GraphQLTest {
             graphQL.execute("""{ candidates { nodes { id, firstname, lastname }, total, pageNumber } }""")
 
         expect.scenario("mutation").toMatchSnapshot(mutationResult)
+        expect.scenario("query").toMatchSnapshot(queryResult)
+    }
+
+    @Test
+    fun testNullArgumentWithNull() {
+        val graphQL = buildSchema(CANDIDATES.toMutableList(), CHANGE_LOGS.toMutableList())
+
+        val queryResult =
+            graphQL.execute("""{ testNullArgument }""")
+
+        expect.scenario("query").toMatchSnapshot(queryResult)
+    }
+
+    @Test
+    fun testNonNullArgumentWithNull() {
+        val graphQL = buildSchema(CANDIDATES.toMutableList(), CHANGE_LOGS.toMutableList())
+
+        val queryResult =
+            graphQL.execute("""{ testNonNullArgument }""")
+
+        expect.scenario("query").toMatchSnapshot(queryResult)
+    }
+
+    @Test
+    fun testNonNullArgumentWithNonNull() {
+        val graphQL = buildSchema(CANDIDATES.toMutableList(), CHANGE_LOGS.toMutableList())
+
+        val queryResult =
+            graphQL.execute("""{ testNonNullArgument(input: {firstname: "new", lastname: "new", status: SEEKING}, int: 5) }""")
+
         expect.scenario("query").toMatchSnapshot(queryResult)
     }
 }

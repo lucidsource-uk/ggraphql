@@ -36,7 +36,7 @@ type ChangeLog {
     "ISO-8601"
     time: DateTime!
     type: ChangeLogType!
-    user: User
+    user: User @resolver(name: "UserResolver")
 }
 
 schema {
@@ -55,6 +55,9 @@ type QueryT {
     aggregateByStatus: CandidateStatusAggregation!
     candidate(candidateId: String!): Candidate @resolver(name: "CandidateResolver")
     candidates: [Candidate!]! @paginated @filtered
+    testNullArgument(input: CandidateInput, int: Int): String
+    testNonNullArgument(input: CandidateInput!, int: Int!): String
+    testSingleArgument(input: CandidateInput!): String
 }
 
 type SuccessResponse {

@@ -11,18 +11,43 @@ enum FilterOperator {
 
 directive @scalarType(type: String) on SCALAR
 directive @ignore on OBJECT
-directive @resolver(name: String) on FIELD_DEFINITION
+directive @resolver(name: String!) on FIELD_DEFINITION
 directive @filter(operators: [FilterOperator!]!) on FIELD_DEFINITION
 directive @filtered on FIELD_DEFINITION
 directive @paginated on FIELD_DEFINITION
 
 scalar DateTime @scalarType(type: "java.util.Date")
+scalar PaginationCursor @scalarType(type: "java.lang.String")
 
 union Results = TestDto | OtherDto
+
+type BabyNested {
+    id: String
+    name: String
+}
+
+type ChildNested {
+    id: String
+    name: String
+    babies: [BabyNested] @resolver(name: "NodeResolver")
+}
+
+type ParentNested {
+    id: String
+    name: String
+    children: [ChildNested] @resolver(name: "NodeResolver")
+    paginatedKids: [ChildNested] @paginated
+}
+
+input TestIto {
+    name: String
+}
 
 type Query {
     list: [TestDto!]! @filtered @paginated
     stuff: [Results!]!
+    someMethod(arg: TestIto!): String
+    anotherOneMethod(arg: TestIto): String
 }
 
 type TestDto implements IdentifiedEntity {

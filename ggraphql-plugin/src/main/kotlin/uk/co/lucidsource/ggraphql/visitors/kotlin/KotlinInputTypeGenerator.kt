@@ -1,8 +1,5 @@
 package uk.co.lucidsource.ggraphql.visitors.kotlin
 
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -40,7 +37,6 @@ class KotlinInputTypeGenerator(
         val parameters = inputObjectTypeDefinition.inputValueDefinitions
             .map {
                 ParameterSpec.builder(it.name, typeResolver.getKotlinTypeForModel(it.type))
-                    .addAnnotation(AnnotationSpec.builder(JsonProperty::class).addMember("%S", it.name).build())
                     .defaultValue(if (GraphQLTypeUtil.isNullType(it.type)) CodeBlock.of("null") else null)
                     .build()
             }
@@ -50,7 +46,6 @@ class KotlinInputTypeGenerator(
             .primaryConstructor(
                 FunSpec.constructorBuilder()
                     .addParameters(parameters)
-                    .addAnnotation(JsonCreator::class)
                     .build()
             )
             .addProperties(properties)

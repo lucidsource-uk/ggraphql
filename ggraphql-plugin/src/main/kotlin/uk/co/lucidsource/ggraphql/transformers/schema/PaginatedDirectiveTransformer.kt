@@ -62,9 +62,9 @@ class PaginatedDirectiveTransformer : SDLNodeTransformer {
                                 FieldDefinition.newFieldDefinition().name(TOTAL)
                                     .type(NonNullType(TypeName("Int"))).build(),
                                 FieldDefinition.newFieldDefinition().name(NEXT_CURSOR)
-                                    .type(TypeName("String")).build(),
+                                    .type(TypeName("PaginationCursor")).build(),
                                 FieldDefinition.newFieldDefinition().name(PREVIOUS_CURSOR)
-                                    .type(TypeName("String")).build()
+                                    .type(TypeName("PaginationCursor")).build()
                             )
                         ).build()
 

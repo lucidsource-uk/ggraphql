@@ -9,6 +9,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitor
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
 
@@ -36,6 +37,7 @@ class KotlinResolverGenerator(
                         ).build()
                     }
             )
+            .addParameter("deserializer", Deserializer::class)
             .build()
 
         val registerMethod = FunSpec
@@ -49,7 +51,7 @@ class KotlinResolverGenerator(
         context.dataFetchers.forEach { registeredFetcher ->
             registerMethod.addCode(
                 CodeBlock.of(
-                    "graphQLCodeRegistry.dataFetcher(%T.coordinates(%S, %S), %T(%L))\n",
+                    "graphQLCodeRegistry.dataFetcher(%T.coordinates(%S, %S), %T(%L, deserializer))\n",
                     FieldCoordinates::class,
                     registeredFetcher.objectTypeName,
                     registeredFetcher.fieldName,
@@ -69,6 +71,11 @@ class KotlinResolverGenerator(
                         .initializer(it.key)
                         .build()
                 }
+            )
+            .addProperty(
+                PropertySpec.builder("deserializer", Deserializer::class)
+                    .initializer("deserializer")
+                    .build()
             )
             .addFunction(registerMethod.build())
             .build()

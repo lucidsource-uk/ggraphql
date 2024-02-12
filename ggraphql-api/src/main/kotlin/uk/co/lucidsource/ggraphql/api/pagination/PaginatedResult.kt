@@ -1,9 +1,9 @@
 package uk.co.lucidsource.ggraphql.api.pagination
 
-data class PaginatedResult<T>(
+data class PaginatedResult<T, P>(
     val nodes: List<T>,
     val total: Int,
     val pageNumber: Int,
-    val previousCursor: String? = null,
-    val nextCursor: String? = null
+    val previousCursor: P? = null,
+    val nextCursor: P? = null
 )

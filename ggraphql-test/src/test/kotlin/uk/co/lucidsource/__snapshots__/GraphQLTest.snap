@@ -8,6 +8,21 @@ ExecutionResultImpl{errors=[], data={candidates={nodes=[{id=1, firstname=John, l
 ]
 
 
+uk.co.lucidsource.GraphQLTest.testNonNullArgumentWithNonNull[query]=[
+ExecutionResultImpl{errors=[], data={testNonNullArgument=worked}, dataPresent=true, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLTest.testNonNullArgumentWithNull[query]=[
+ExecutionResultImpl{errors=[ValidationError{validationErrorType=MissingFieldArgument, queryPath=[testNonNullArgument], message=Validation error (MissingFieldArgument@[testNonNullArgument]) : Missing field argument 'input', locations=[SourceLocation{line=1, column=3}], description='Validation error (MissingFieldArgument@[testNonNullArgument]) : Missing field argument 'input'', extensions=[]}, ValidationError{validationErrorType=MissingFieldArgument, queryPath=[testNonNullArgument], message=Validation error (MissingFieldArgument@[testNonNullArgument]) : Missing field argument 'int', locations=[SourceLocation{line=1, column=3}], description='Validation error (MissingFieldArgument@[testNonNullArgument]) : Missing field argument 'int'', extensions=[]}], data=null, dataPresent=false, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLTest.testNullArgumentWithNull[query]=[
+ExecutionResultImpl{errors=[], data={testNullArgument=worked}, dataPresent=true, extensions=null}
+]
+
+
 uk.co.lucidsource.GraphQLTest.testQueryPaginatedResults=[
 ExecutionResultImpl{errors=[], data={candidates={nodes=[{id=1, firstname=John, lastname=Doe}, {id=2, firstname=Jane, lastname=Doe}], total=2, pageNumber=1}}, dataPresent=true, extensions=null}
 ]

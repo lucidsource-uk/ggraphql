@@ -1,7 +1,5 @@
 package uk.co.lucidsource.ggraphql.visitors.kotlin
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -10,12 +8,14 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import graphql.language.ObjectTypeDefinition
 import graphql.language.TypeName
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getResolverAspectResolverName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getReturnsGenerateTypeParameterOf
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isExcludedFromCodeGenerationAspectApplied
@@ -24,6 +24,7 @@ import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultDataFetche
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeUtil
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitor
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
+import java.util.concurrent.CompletableFuture
 
 class KotlinDataFetcherTypeGenerator(
     private val typeResolver: KotlinTypeResolver
@@ -43,13 +44,14 @@ class KotlinDataFetcherTypeGenerator(
                             typeResolver.getModelTypeForName(
                                 field.getReturnsGenerateTypeParameterOf()
                                     ?: throw IllegalArgumentException("Expecting parameterized type to be present for paginated result.")
-                            )
+                            ),
+                            typeResolver.getWiringTypeForModel(TypeName("PaginationCursor")).copy(nullable = false)
                         )
                     else typeResolver.getKotlinTypeForModel(field.type)
 
                 val dataFetcherGet = FunSpec.builder("get")
                     .addModifiers(KModifier.OVERRIDE)
-                    .returns(returnType)
+                    .returns(CompletableFuture::class.asClassName().parameterizedBy(returnType))
                     .addParameter(ParameterSpec.builder("env", DataFetchingEnvironment::class).build())
 
                 val parameters = field.inputValueDefinitions.associate {
@@ -69,9 +71,8 @@ class KotlinDataFetcherTypeGenerator(
                     if (typeResolver.isComplexTypeName(GraphQLTypeUtil.getTypeName(it.type))) {
                         dataFetcherGet.addCode(
                             CodeBlock.of(
-                                "val %L = %T().convertValue(env.getArgument(%S), %T::class.java) \n",
+                                "val %L = env.getArgument<Any>(%S)?.let { deserializer.deserialize(it, %T::class.java) } \n",
                                 it.name,
-                                ObjectMapper::class,
                                 it.name,
                                 typeResolver.getKotlinTypeForModel(it.type).copy(nullable = false)
                             )
@@ -91,20 +92,30 @@ class KotlinDataFetcherTypeGenerator(
                 if (objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
                     dataFetcherGet.addCode(
                         CodeBlock.of(
-                            "return service.%L(%L)",
+                            "return CompletableFuture.supplyAsync { service.%L(%L) }",
                             field.name,
-                            field.inputValueDefinitions.joinToString(", ") { it.name + " = " + it.name }
+                            field.inputValueDefinitions.joinToString(", ") {
+                                it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
+                                        it.type
+                                    )
+                                ) "" else "!!")
+                            }
                         )
                     )
                 } else {
                     dataFetcherGet.addCode(
                         CodeBlock.of(
-                            "return service.%L(%L = env.getSource<%T>(), %L)",
+                            "return CompletableFuture.supplyAsync { service.%L(%L = env.getSource<%T>(), %L) }",
                             field.name,
                             objectTypeDefinition.name.replaceFirstChar { it.lowercase() },
                             typeResolver.getKotlinTypeForModel(TypeName(objectTypeDefinition.name))
                                 .copy(nullable = false),
-                            field.inputValueDefinitions.joinToString(", ") { it.name + " = " + it.name }
+                            field.inputValueDefinitions.joinToString(", ") {
+                                it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
+                                        it.type
+                                    )
+                                ) "" else "!!")
+                            }
                         )
                     )
                 }
@@ -131,23 +142,29 @@ class KotlinDataFetcherTypeGenerator(
                     typeResolver.getDataFetcherPackageName(),
                     TypeSpec.classBuilder(objectTypeDefinition.defaultDataFetcherName(field))
                         .addSuperinterface(
-                            ClassName.bestGuess(DataFetcher::class.qualifiedName!!)
-                                .parameterizedBy(returnType)
+                            DataFetcher::class
+                                .asClassName()
+                                .parameterizedBy(
+                                    CompletableFuture::class.asClassName()
+                                        .parameterizedBy(
+                                            returnType
+                                        )
+                                )
                         )
                         .primaryConstructor(
                             FunSpec.constructorBuilder()
-                                .addParameter(
-                                    ParameterSpec.builder(
-                                        "service",
-                                        typeResolver.getResolverTypeForName(resolverServiceName)
-                                    )
-                                        .build()
-                                )
+                                .addParameter("service", typeResolver.getResolverTypeForName(resolverServiceName))
+                                .addParameter("deserializer", Deserializer::class)
                                 .build()
                         )
                         .addProperty(
                             PropertySpec.builder("service", typeResolver.getResolverTypeForName(resolverServiceName))
                                 .initializer("service")
+                                .build()
+                        )
+                        .addProperty(
+                            PropertySpec.builder("deserializer", Deserializer::class)
+                                .initializer("deserializer")
                                 .build()
                         )
                         .addFunction(

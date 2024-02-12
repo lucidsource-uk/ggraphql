@@ -1,24 +1,156 @@
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/ChildNestedBabiesDataFetcher.kt]=[
+package test.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import kotlin.collections.List
+import test.models.BabyNested
+import test.models.ChildNested
+import test.resolvers.NodeResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class ChildNestedBabiesDataFetcher(
+  public val service: NodeResolver,
+  public val deserializer: Deserializer,
+) : DataFetcher<CompletableFuture<List<BabyNested?>?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<BabyNested?>?> =
+      CompletableFuture.supplyAsync { service.babies(childNested = env.getSource<ChildNested>(), ) }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/ParentNestedChildrenDataFetcher.kt]=[
+package test.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import kotlin.collections.List
+import test.models.ChildNested
+import test.models.ParentNested
+import test.resolvers.NodeResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class ParentNestedChildrenDataFetcher(
+  public val service: NodeResolver,
+  public val deserializer: Deserializer,
+) : DataFetcher<CompletableFuture<List<ChildNested?>?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<ChildNested?>?> =
+      CompletableFuture.supplyAsync { service.children(parentNested = env.getSource<ParentNested>(),
+      ) }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/ParentNestedPaginatedKidsDataFetcher.kt]=[
+package test.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import kotlin.Int
+import kotlin.String
+import test.models.ChildNested
+import test.models.ParentNested
+import test.resolvers.ParentNestedResolver
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class ParentNestedPaginatedKidsDataFetcher(
+  public val service: ParentNestedResolver,
+  public val deserializer: Deserializer,
+) : DataFetcher<CompletableFuture<PaginatedResult<ChildNested, String>>> {
+  override fun `get`(env: DataFetchingEnvironment):
+      CompletableFuture<PaginatedResult<ChildNested, String>> {
+    val pageSize = env.getArgument("pageSize") as Int? 
+    val cursor = env.getArgument("cursor") as String? 
+    return CompletableFuture.supplyAsync { service.paginatedKids(parentNested =
+        env.getSource<ParentNested>(), pageSize = pageSize, cursor = cursor) }
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/QueryAnotherOneMethodDataFetcher.kt]=[
+package test.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import kotlin.String
+import test.models.TestIto
+import test.resolvers.QueryResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class QueryAnotherOneMethodDataFetcher(
+  public val service: QueryResolver,
+  public val deserializer: Deserializer,
+) : DataFetcher<CompletableFuture<String?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<String?> {
+    val arg = env.getArgument<Any>("arg")?.let { deserializer.deserialize(it, TestIto::class.java) }
+        
+    return CompletableFuture.supplyAsync { service.anotherOneMethod(arg = arg) }
+  }
+}
+
+]
+
+
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/QueryListDataFetcher.kt]=[
 package test.datafetchers
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
 import kotlin.Int
 import kotlin.String
 import test.models.TestDto
 import test.models.TestDtoFilter
 import test.resolvers.QueryResolver
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 
 public class QueryListDataFetcher(
   public val service: QueryResolver,
-) : DataFetcher<PaginatedResult<TestDto>> {
-  override fun `get`(env: DataFetchingEnvironment): PaginatedResult<TestDto> {
-    val where = ObjectMapper().convertValue(env.getArgument("where"), TestDtoFilter::class.java) 
+  public val deserializer: Deserializer,
+) : DataFetcher<CompletableFuture<PaginatedResult<TestDto, String>>> {
+  override fun `get`(env: DataFetchingEnvironment):
+      CompletableFuture<PaginatedResult<TestDto, String>> {
+    val where = env.getArgument<Any>("where")?.let { deserializer.deserialize(it,
+        TestDtoFilter::class.java) } 
     val pageSize = env.getArgument("pageSize") as Int? 
     val cursor = env.getArgument("cursor") as String? 
-    return service.list(where = where, pageSize = pageSize, cursor = cursor)
+    return CompletableFuture.supplyAsync { service.list(where = where, pageSize = pageSize, cursor =
+        cursor) }
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/QuerySomeMethodDataFetcher.kt]=[
+package test.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import kotlin.String
+import test.models.TestIto
+import test.resolvers.QueryResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class QuerySomeMethodDataFetcher(
+  public val service: QueryResolver,
+  public val deserializer: Deserializer,
+) : DataFetcher<CompletableFuture<String?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<String?> {
+    val arg = env.getArgument<Any>("arg")?.let { deserializer.deserialize(it, TestIto::class.java) }
+        
+    return CompletableFuture.supplyAsync { service.someMethod(arg = arg!!) }
   }
 }
 
@@ -30,14 +162,18 @@ package test.datafetchers
 
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
 import kotlin.collections.List
 import test.models.Results
 import test.resolvers.QueryResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 
 public class QueryStuffDataFetcher(
   public val service: QueryResolver,
-) : DataFetcher<List<Results>> {
-  override fun `get`(env: DataFetchingEnvironment): List<Results> = service.stuff()
+  public val deserializer: Deserializer,
+) : DataFetcher<CompletableFuture<List<Results>>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<Results>> =
+      CompletableFuture.supplyAsync { service.stuff() }
 }
 
 ]
@@ -48,22 +184,53 @@ package test.datafetchers
 
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
 import kotlin.Int
 import kotlin.String
 import test.models.Results
 import test.models.TestDto
 import test.resolvers.TestDtoResolver
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 
 public class TestDtoResultsDataFetcher(
   public val service: TestDtoResolver,
-) : DataFetcher<PaginatedResult<Results>> {
-  override fun `get`(env: DataFetchingEnvironment): PaginatedResult<Results> {
+  public val deserializer: Deserializer,
+) : DataFetcher<CompletableFuture<PaginatedResult<Results, String>>> {
+  override fun `get`(env: DataFetchingEnvironment):
+      CompletableFuture<PaginatedResult<Results, String>> {
     val pageSize = env.getArgument("pageSize") as Int? 
     val cursor = env.getArgument("cursor") as String? 
-    return service.results(testDto = env.getSource<TestDto>(), pageSize = pageSize, cursor = cursor)
+    return CompletableFuture.supplyAsync { service.results(testDto = env.getSource<TestDto>(),
+        pageSize = pageSize, cursor = cursor) }
   }
 }
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/BabyNested.kt]=[
+package test.models
+
+import kotlin.String
+
+public data class BabyNested(
+  public val id: String?,
+  public val name: String?,
+)
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/ChildNested.kt]=[
+package test.models
+
+import kotlin.String
+
+public data class ChildNested(
+  public val id: String?,
+  public val name: String?,
+)
 
 ]
 
@@ -88,6 +255,19 @@ import kotlin.String
 public data class OtherDto(
   public val id: String?,
 ) : Results
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/ParentNested.kt]=[
+package test.models
+
+import kotlin.String
+
+public data class ParentNested(
+  public val id: String?,
+  public val name: String?,
+)
 
 ]
 
@@ -120,24 +300,17 @@ public data class TestDto(
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDtoAgeFilterCriteria.kt]=[
 package test.models
 
-import com.fasterxml.jackson.`annotation`.JsonCreator
-import com.fasterxml.jackson.`annotation`.JsonProperty
 import kotlin.Int
 import uk.co.lucidsource.ggraphql.api.filtering.FilterOperator
 import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
 import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterUnaryExpression
 import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
 
-public data class TestDtoAgeFilterCriteria @JsonCreator constructor(
-  @JsonProperty("eq")
+public data class TestDtoAgeFilterCriteria(
   public val eq: Int? = null,
-  @JsonProperty("gt")
   public val gt: Int? = null,
-  @JsonProperty("gtEq")
   public val gtEq: Int? = null,
-  @JsonProperty("lt")
   public val lt: Int? = null,
-  @JsonProperty("ltEq")
   public val ltEq: Int? = null,
 ) : FilterExpression {
   override fun ast(): Expression {
@@ -176,20 +349,15 @@ public data class TestDtoAgeFilterCriteria @JsonCreator constructor(
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDtoFilter.kt]=[
 package test.models
 
-import com.fasterxml.jackson.`annotation`.JsonCreator
-import com.fasterxml.jackson.`annotation`.JsonProperty
 import kotlin.collections.List
 import uk.co.lucidsource.ggraphql.api.filtering.FilterGroupOperator
 import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
 import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterGroupCompoundExpression
 import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
 
-public data class TestDtoFilter @JsonCreator constructor(
-  @JsonProperty("all")
+public data class TestDtoFilter(
   public val all: List<TestDtoFilterCriteria>? = null,
-  @JsonProperty("not")
   public val not: List<TestDtoFilterCriteria>? = null,
-  @JsonProperty("any")
   public val any: List<TestDtoFilterCriteria>? = null,
 ) : FilterExpression {
   override fun ast(): Expression {
@@ -215,17 +383,13 @@ public data class TestDtoFilter @JsonCreator constructor(
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDtoFilterCriteria.kt]=[
 package test.models
 
-import com.fasterxml.jackson.`annotation`.JsonCreator
-import com.fasterxml.jackson.`annotation`.JsonProperty
 import uk.co.lucidsource.ggraphql.api.filtering.FilterGroupOperator
 import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
 import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterGroupCompoundExpression
 import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
 
-public data class TestDtoFilterCriteria @JsonCreator constructor(
-  @JsonProperty("name")
+public data class TestDtoFilterCriteria(
   public val name: TestDtoNameFilterCriteria? = null,
-  @JsonProperty("age")
   public val age: TestDtoAgeFilterCriteria? = null,
 ) : FilterExpression {
   override fun ast(): Expression {
@@ -244,16 +408,13 @@ public data class TestDtoFilterCriteria @JsonCreator constructor(
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestDtoNameFilterCriteria.kt]=[
 package test.models
 
-import com.fasterxml.jackson.`annotation`.JsonCreator
-import com.fasterxml.jackson.`annotation`.JsonProperty
 import kotlin.String
 import uk.co.lucidsource.ggraphql.api.filtering.FilterOperator
 import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
 import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterUnaryExpression
 import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
 
-public data class TestDtoNameFilterCriteria @JsonCreator constructor(
-  @JsonProperty("eq")
+public data class TestDtoNameFilterCriteria(
   public val eq: String? = null,
 ) : FilterExpression {
   override fun ast(): Expression {
@@ -269,29 +430,97 @@ public data class TestDtoNameFilterCriteria @JsonCreator constructor(
 ]
 
 
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/TestIto.kt]=[
+package test.models
+
+import kotlin.String
+
+public data class TestIto(
+  public val name: String? = null,
+)
+
+]
+
+
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/GraphQLCodeDataFetcherRegistry.kt]=[
 package test.resolvers
 
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
+import test.datafetchers.ChildNestedBabiesDataFetcher
+import test.datafetchers.ParentNestedChildrenDataFetcher
+import test.datafetchers.ParentNestedPaginatedKidsDataFetcher
+import test.datafetchers.QueryAnotherOneMethodDataFetcher
 import test.datafetchers.QueryListDataFetcher
+import test.datafetchers.QuerySomeMethodDataFetcher
 import test.datafetchers.QueryStuffDataFetcher
 import test.datafetchers.TestDtoResultsDataFetcher
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 
 public class GraphQLCodeDataFetcherRegistry(
+  public val nodeResolver: NodeResolver,
+  public val parentNestedResolver: ParentNestedResolver,
   public val queryResolver: QueryResolver,
   public val testDtoResolver: TestDtoResolver,
+  public val deserializer: Deserializer,
 ) {
   public fun registerResolvers(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
       GraphQLCodeRegistry.Builder {
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ChildNested", "babies"),
+        ChildNestedBabiesDataFetcher(nodeResolver, deserializer))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ParentNested", "children"),
+        ParentNestedChildrenDataFetcher(nodeResolver, deserializer))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ParentNested", "paginatedKids"),
+        ParentNestedPaginatedKidsDataFetcher(parentNestedResolver, deserializer))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "stuff"),
-        QueryStuffDataFetcher(queryResolver))
+        QueryStuffDataFetcher(queryResolver, deserializer))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "someMethod"),
+        QuerySomeMethodDataFetcher(queryResolver, deserializer))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "anotherOneMethod"),
+        QueryAnotherOneMethodDataFetcher(queryResolver, deserializer))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "list"),
-        QueryListDataFetcher(queryResolver))
+        QueryListDataFetcher(queryResolver, deserializer))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("TestDto", "results"),
-        TestDtoResultsDataFetcher(testDtoResolver))
+        TestDtoResultsDataFetcher(testDtoResolver, deserializer))
     return graphQLCodeRegistry
   }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/NodeResolver.kt]=[
+package test.resolvers
+
+import kotlin.collections.List
+import test.models.BabyNested
+import test.models.ChildNested
+import test.models.ParentNested
+
+public interface NodeResolver {
+  public fun babies(childNested: ChildNested): List<BabyNested?>?
+
+  public fun children(parentNested: ParentNested): List<ChildNested?>?
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/ParentNestedResolver.kt]=[
+package test.resolvers
+
+import kotlin.Int
+import kotlin.String
+import test.models.ChildNested
+import test.models.ParentNested
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+
+public interface ParentNestedResolver {
+  public fun paginatedKids(
+    pageSize: Int?,
+    cursor: String?,
+    parentNested: ParentNested,
+  ): PaginatedResult<ChildNested, String>
 }
 
 ]
@@ -306,16 +535,21 @@ import kotlin.collections.List
 import test.models.Results
 import test.models.TestDto
 import test.models.TestDtoFilter
+import test.models.TestIto
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 
 public interface QueryResolver {
   public fun stuff(): List<Results>
 
+  public fun someMethod(arg: TestIto): String?
+
+  public fun anotherOneMethod(arg: TestIto?): String?
+
   public fun list(
     `where`: TestDtoFilter?,
     pageSize: Int?,
     cursor: String?,
-  ): PaginatedResult<TestDto>
+  ): PaginatedResult<TestDto, String>
 }
 
 ]
@@ -335,7 +569,7 @@ public interface TestDtoResolver {
     pageSize: Int?,
     cursor: String?,
     testDto: TestDto,
-  ): PaginatedResult<Results>
+  ): PaginatedResult<Results, String>
 }
 
 ]
@@ -415,7 +649,7 @@ public object TypeResolverWiring {
 
 
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[generated-files]=[
-/test/datafetchers/QueryStuffDataFetcher.kt,/test/datafetchers/TestDtoResultsDataFetcher.kt,/test/datafetchers/QueryListDataFetcher.kt,/test/wiring/IdentifiedEntityTypeResolver.kt,/test/wiring/ResultsTypeResolver.kt,/test/wiring/TypeResolverWiring.kt,/test/resolvers/QueryResolver.kt,/test/resolvers/GraphQLCodeDataFetcherRegistry.kt,/test/resolvers/TestDtoResolver.kt,/test/models/IdentifiedEntity.kt,/test/models/OtherDto.kt,/test/models/TestDtoFilterCriteria.kt,/test/models/Results.kt,/test/models/TestDtoFilter.kt,/test/models/TestDto.kt,/test/models/TestDtoAgeFilterCriteria.kt,/test/models/TestDtoNameFilterCriteria.kt
+/test/datafetchers/QueryAnotherOneMethodDataFetcher.kt,/test/datafetchers/ParentNestedChildrenDataFetcher.kt,/test/datafetchers/QueryStuffDataFetcher.kt,/test/datafetchers/QuerySomeMethodDataFetcher.kt,/test/datafetchers/ChildNestedBabiesDataFetcher.kt,/test/datafetchers/ParentNestedPaginatedKidsDataFetcher.kt,/test/datafetchers/TestDtoResultsDataFetcher.kt,/test/datafetchers/QueryListDataFetcher.kt,/test/wiring/IdentifiedEntityTypeResolver.kt,/test/wiring/ResultsTypeResolver.kt,/test/wiring/TypeResolverWiring.kt,/test/resolvers/QueryResolver.kt,/test/resolvers/GraphQLCodeDataFetcherRegistry.kt,/test/resolvers/NodeResolver.kt,/test/resolvers/ParentNestedResolver.kt,/test/resolvers/TestDtoResolver.kt,/test/models/IdentifiedEntity.kt,/test/models/BabyNested.kt,/test/models/ChildNested.kt,/test/models/OtherDto.kt,/test/models/TestDtoFilterCriteria.kt,/test/models/Results.kt,/test/models/ParentNested.kt,/test/models/TestDtoFilter.kt,/test/models/TestDto.kt,/test/models/TestIto.kt,/test/models/TestDtoAgeFilterCriteria.kt,/test/models/TestDtoNameFilterCriteria.kt
 ]
 
 
@@ -426,20 +660,48 @@ interface IdentifiedEntity {
 
 union Results = OtherDto | TestDto
 
+type BabyNested {
+  id: String
+  name: String
+}
+
+type ChildNested {
+  babies: [BabyNested]
+  id: String
+  name: String
+}
+
+type ChildNestedPaginatedResult {
+  nextCursor: PaginationCursor
+  nodes: [ChildNested]
+  pageNumber: Int!
+  previousCursor: PaginationCursor
+  total: Int!
+}
+
 type OtherDto {
   id: String
 }
 
+type ParentNested {
+  children: [ChildNested]
+  id: String
+  name: String
+  paginatedKids(cursor: String, pageSize: Int = 10): ChildNestedPaginatedResult!
+}
+
 type Query {
+  anotherOneMethod(arg: TestIto): String
   list(cursor: String, pageSize: Int = 10, where: TestDtoFilter): TestDtoPaginatedResult!
+  someMethod(arg: TestIto!): String
   stuff: [Results!]!
 }
 
 type ResultsPaginatedResult {
-  nextCursor: String
+  nextCursor: PaginationCursor
   nodes: [Results!]!
   pageNumber: Int!
-  previousCursor: String
+  previousCursor: PaginationCursor
   total: Int!
 }
 
@@ -452,10 +714,10 @@ type TestDto implements IdentifiedEntity {
 }
 
 type TestDtoPaginatedResult {
-  nextCursor: String
+  nextCursor: PaginationCursor
   nodes: [TestDto!]!
   pageNumber: Int!
-  previousCursor: String
+  previousCursor: PaginationCursor
   total: Int!
 }
 
@@ -470,6 +732,8 @@ enum FilterOperator {
 }
 
 scalar DateTime
+
+scalar PaginationCursor
 
 input TestDtoAgeFilterCriteria {
   eq: Int
@@ -492,6 +756,10 @@ input TestDtoFilterCriteria {
 
 input TestDtoNameFilterCriteria {
   eq: String
+}
+
+input TestIto {
+  name: String
 }
 
 ]
