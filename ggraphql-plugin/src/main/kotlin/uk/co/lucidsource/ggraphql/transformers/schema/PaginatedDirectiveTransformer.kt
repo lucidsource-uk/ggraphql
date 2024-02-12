@@ -78,7 +78,7 @@ class PaginatedDirectiveTransformer : SDLNodeTransformer {
                         )
                         .inputValueDefinition(
                             InputValueDefinition.newInputValueDefinition().name(CURSOR)
-                                .type(TypeName("String")).build()
+                                .type(TypeName("PaginationCursor")).build()
                         )
                         .type(NonNullType(TypeName(paginationResultTypeDefName)))
                         .applyReturnsGenerateTypeParameterOf(field.type)

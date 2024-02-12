@@ -74,8 +74,17 @@ class GraphQLTest {
         val candidates: MutableList<Candidate>,
         val changesLogs: MutableList<ChangeLog>
     ) : CandidateResolver {
-        override fun audits(pageSize: Int?, cursor: String?, candidate: Candidate): PaginatedResult<ChangeLog, SimpleToken> {
-            return PaginatedResult(nodes = changesLogs, pageNumber = 1, total = changesLogs.size, nextCursor = SimpleToken("sdsd"))
+        override fun audits(
+            pageSize: Int?,
+            cursor: SimpleToken?,
+            candidate: Candidate
+        ): PaginatedResult<ChangeLog, SimpleToken> {
+            return PaginatedResult(
+                nodes = changesLogs,
+                pageNumber = 1,
+                total = changesLogs.size,
+                nextCursor = SimpleToken("sdsd")
+            )
         }
 
         override fun persistCandidate(candidate: CandidateInput): Candidate {
@@ -129,7 +138,7 @@ class GraphQLTest {
         override fun candidates(
             where: CandidateFilter?,
             pageSize: Int?,
-            cursor: String?
+            cursor: SimpleToken?
         ): PaginatedResult<Candidate, SimpleToken> {
             return PaginatedResult(nodes = candidates, pageNumber = 1, total = candidates.size)
         }
@@ -162,7 +171,12 @@ class GraphQLTest {
             )
 
         wiring.scalar(ExtendedScalars.DateTime)
-        wiring.scalar(GraphQLScalarType.newScalar(Scalars.GraphQLString).name("PaginationCursor").build())
+        wiring.scalar(
+            GraphQLScalarType.newScalar(Scalars.GraphQLString)
+                .name("PaginationCursor")
+                .coercing(PaginationCursorCoercing())
+                .build()
+        )
 
         TypeResolverWiring.wireTypeResolvers(wiring)
 
@@ -189,7 +203,7 @@ class GraphQLTest {
         val graphQL = buildSchema(CANDIDATES.toMutableList(), CHANGE_LOGS.toMutableList())
 
         val result =
-            graphQL.execute("""{ candidates { nodes { id, firstname, lastname }, total, pageNumber } }""")
+            graphQL.execute("""{ candidates(cursor: "test") { nodes { id, firstname, lastname }, total, pageNumber } }""")
 
         expect.toMatchSnapshot(result)
     }

@@ -53,7 +53,6 @@ import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
 import kotlin.Int
-import kotlin.String
 import test.models.ChildNested
 import test.models.ParentNested
 import test.resolvers.ParentNestedResolver
@@ -67,7 +66,8 @@ public class ParentNestedPaginatedKidsDataFetcher(
   override fun `get`(env: DataFetchingEnvironment):
       CompletableFuture<PaginatedResult<ChildNested, UnknownType>> {
     val pageSize = env.getArgument("pageSize") as Int? 
-    val cursor = env.getArgument("cursor") as String? 
+    val cursor = env.getArgument<Any>("cursor")?.let { deserializer.deserialize(it,
+        UnknownType::class.java) } 
     return CompletableFuture.supplyAsync { service.paginatedKids(parentNested =
         env.getSource<ParentNested>(), pageSize = pageSize, cursor = cursor) }
   }
@@ -109,7 +109,6 @@ import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
 import kotlin.Int
-import kotlin.String
 import test.models.TestDto
 import test.models.TestDtoFilter
 import test.resolvers.QueryResolver
@@ -125,7 +124,8 @@ public class QueryListDataFetcher(
     val where = env.getArgument<Any>("where")?.let { deserializer.deserialize(it,
         TestDtoFilter::class.java) } 
     val pageSize = env.getArgument("pageSize") as Int? 
-    val cursor = env.getArgument("cursor") as String? 
+    val cursor = env.getArgument<Any>("cursor")?.let { deserializer.deserialize(it,
+        UnknownType::class.java) } 
     return CompletableFuture.supplyAsync { service.list(where = where, pageSize = pageSize, cursor =
         cursor) }
   }
@@ -189,7 +189,6 @@ import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
 import kotlin.Int
-import kotlin.String
 import test.models.Results
 import test.models.TestDto
 import test.resolvers.TestDtoResolver
@@ -203,7 +202,8 @@ public class TestDtoResultsDataFetcher(
   override fun `get`(env: DataFetchingEnvironment):
       CompletableFuture<PaginatedResult<Results, UnknownType>> {
     val pageSize = env.getArgument("pageSize") as Int? 
-    val cursor = env.getArgument("cursor") as String? 
+    val cursor = env.getArgument<Any>("cursor")?.let { deserializer.deserialize(it,
+        UnknownType::class.java) } 
     return CompletableFuture.supplyAsync { service.results(testDto = env.getSource<TestDto>(),
         pageSize = pageSize, cursor = cursor) }
   }
@@ -514,7 +514,6 @@ package test.resolvers
 
 import co.uk.somepackage.UnknownType
 import kotlin.Int
-import kotlin.String
 import test.models.ChildNested
 import test.models.ParentNested
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
@@ -522,7 +521,7 @@ import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 public interface ParentNestedResolver {
   public fun paginatedKids(
     pageSize: Int?,
-    cursor: String?,
+    cursor: UnknownType?,
     parentNested: ParentNested,
   ): PaginatedResult<ChildNested, UnknownType>
 }
@@ -553,7 +552,7 @@ public interface QueryResolver {
   public fun list(
     `where`: TestDtoFilter?,
     pageSize: Int?,
-    cursor: String?,
+    cursor: UnknownType?,
   ): PaginatedResult<TestDto, UnknownType>
 }
 
@@ -565,7 +564,6 @@ package test.resolvers
 
 import co.uk.somepackage.UnknownType
 import kotlin.Int
-import kotlin.String
 import test.models.Results
 import test.models.TestDto
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
@@ -573,7 +571,7 @@ import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 public interface TestDtoResolver {
   public fun results(
     pageSize: Int?,
-    cursor: String?,
+    cursor: UnknownType?,
     testDto: TestDto,
   ): PaginatedResult<Results, UnknownType>
 }
@@ -693,12 +691,12 @@ type ParentNested {
   children: [ChildNested]
   id: String
   name: String
-  paginatedKids(cursor: String, pageSize: Int = 10): ChildNestedPaginatedResult!
+  paginatedKids(cursor: PaginationCursor, pageSize: Int = 10): ChildNestedPaginatedResult!
 }
 
 type Query {
   anotherOneMethod(arg: TestIto): String
-  list(cursor: String, pageSize: Int = 10, where: TestDtoFilter): TestDtoPaginatedResult!
+  list(cursor: PaginationCursor, pageSize: Int = 10, where: TestDtoFilter): TestDtoPaginatedResult!
   someMethod(arg: TestIto!): String
   stuff: [Results!]!
 }
@@ -716,7 +714,7 @@ type TestDto implements IdentifiedEntity {
   createAt: DateTime
   id: String
   name: String!
-  results(cursor: String, pageSize: Int = 10): ResultsPaginatedResult!
+  results(cursor: PaginationCursor, pageSize: Int = 10): ResultsPaginatedResult!
 }
 
 type TestDtoPaginatedResult {

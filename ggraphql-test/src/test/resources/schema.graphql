@@ -10,7 +10,7 @@ interface IdentifiedEntity {
 union ChangeItem = ChangeItemList | ChangeItemValue
 
 type Candidate implements IdentifiedEntity {
-  audits(cursor: String, pageSize: Int = 10): ChangeLogPaginatedResult!
+  audits(cursor: PaginationCursor, pageSize: Int = 10): ChangeLogPaginatedResult!
   firstname: String!
   id: String
   lastname: String!
@@ -70,7 +70,7 @@ type Mutation {
 type QueryT {
   aggregateByStatus: CandidateStatusAggregation!
   candidate(candidateId: String!): Candidate
-  candidates(cursor: String, pageSize: Int = 10, where: CandidateFilter): CandidatePaginatedResult!
+  candidates(cursor: PaginationCursor, pageSize: Int = 10, where: CandidateFilter): CandidatePaginatedResult!
   testNonNullArgument(input: CandidateInput!, int: Int!): String
   testNullArgument(input: CandidateInput, int: Int): String
   testSingleArgument(input: CandidateInput!): String
