@@ -35,6 +35,7 @@ import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 import java.io.File
 import java.util.Date
+import java.util.concurrent.ForkJoinPool
 
 @ExtendWith(value = [SnapshotExtension::class])
 class GraphQLTest {
@@ -166,7 +167,8 @@ class GraphQLTest {
                     candidateResolver = MockCandidateResolver(candidates, changeLogs),
                     queryTResolver = MockQueryResolver(candidates),
                     userResolver = MockUserResolver(),
-                    deserializer = deserializer
+                    deserializer = deserializer,
+                    executor = ForkJoinPool()
                 ).registerResolvers(newCodeRegistry()).build()
             )
 

@@ -19,7 +19,6 @@ gradlePlugin {
 dependencies {
     implementation(project(":ggraphql-api"))
     implementation("com.graphql-java:graphql-java:${findProperty("graphql_java_version")}")
-    implementation("com.graphql-java:graphql-java-extended-scalars:${findProperty("graphql_java_extended_scalars_version")}")
     implementation("com.squareup:kotlinpoet:1.16.0")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")

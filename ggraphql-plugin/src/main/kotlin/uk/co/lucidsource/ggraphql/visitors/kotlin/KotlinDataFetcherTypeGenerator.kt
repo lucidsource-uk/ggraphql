@@ -25,6 +25,7 @@ import uk.co.lucidsource.ggraphql.util.GraphQLTypeUtil
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitor
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 
 class KotlinDataFetcherTypeGenerator(
     private val typeResolver: KotlinTypeResolver
@@ -92,7 +93,7 @@ class KotlinDataFetcherTypeGenerator(
                 if (objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
                     dataFetcherGet.addCode(
                         CodeBlock.of(
-                            "return CompletableFuture.supplyAsync { service.%L(%L) }",
+                            "return CompletableFuture.supplyAsync({ service.%L(%L) }, executor)",
                             field.name,
                             field.inputValueDefinitions.joinToString(", ") {
                                 it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
@@ -105,7 +106,7 @@ class KotlinDataFetcherTypeGenerator(
                 } else {
                     dataFetcherGet.addCode(
                         CodeBlock.of(
-                            "return CompletableFuture.supplyAsync { service.%L(%L = env.getSource<%T>(), %L) }",
+                            "return CompletableFuture.supplyAsync({ service.%L(%L = env.getSource<%T>(), %L) }, executor)",
                             field.name,
                             objectTypeDefinition.name.replaceFirstChar { it.lowercase() },
                             typeResolver.getKotlinTypeForModel(TypeName(objectTypeDefinition.name))
@@ -155,6 +156,7 @@ class KotlinDataFetcherTypeGenerator(
                             FunSpec.constructorBuilder()
                                 .addParameter("service", typeResolver.getResolverTypeForName(resolverServiceName))
                                 .addParameter("deserializer", Deserializer::class)
+                                .addParameter("executor", Executor::class)
                                 .build()
                         )
                         .addProperty(
@@ -165,6 +167,11 @@ class KotlinDataFetcherTypeGenerator(
                         .addProperty(
                             PropertySpec.builder("deserializer", Deserializer::class)
                                 .initializer("deserializer")
+                                .build()
+                        )
+                        .addProperty(
+                            PropertySpec.builder("executor", Executor::class)
+                                .initializer("executor")
                                 .build()
                         )
                         .addFunction(

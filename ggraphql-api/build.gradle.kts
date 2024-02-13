@@ -7,9 +7,6 @@ repositories {
 }
 
 dependencies {
-    implementation("com.graphql-java:graphql-java:${findProperty("graphql_java_version")}")
-    implementation("com.graphql-java:graphql-java-extended-scalars:${findProperty("graphql_java_extended_scalars_version")}")
-
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 }
 

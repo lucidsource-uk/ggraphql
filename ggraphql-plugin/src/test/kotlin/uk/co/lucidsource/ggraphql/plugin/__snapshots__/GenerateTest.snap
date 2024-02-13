@@ -4,6 +4,7 @@ package test.datafetchers
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import kotlin.collections.List
 import test.models.BabyNested
 import test.models.ChildNested
@@ -13,9 +14,11 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class ChildNestedBabiesDataFetcher(
   public val service: NodeResolver,
   public val deserializer: Deserializer,
+  public val executor: Executor,
 ) : DataFetcher<CompletableFuture<List<BabyNested?>?>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<BabyNested?>?> =
-      CompletableFuture.supplyAsync { service.babies(childNested = env.getSource<ChildNested>(), ) }
+      CompletableFuture.supplyAsync({ service.babies(childNested = env.getSource<ChildNested>(), )
+      }, executor)
 }
 
 ]
@@ -27,6 +30,7 @@ package test.datafetchers
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import kotlin.collections.List
 import test.models.ChildNested
 import test.models.ParentNested
@@ -36,10 +40,11 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class ParentNestedChildrenDataFetcher(
   public val service: NodeResolver,
   public val deserializer: Deserializer,
+  public val executor: Executor,
 ) : DataFetcher<CompletableFuture<List<ChildNested?>?>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<ChildNested?>?> =
-      CompletableFuture.supplyAsync { service.children(parentNested = env.getSource<ParentNested>(),
-      ) }
+      CompletableFuture.supplyAsync({ service.children(parentNested = env.getSource<ParentNested>(),
+      ) }, executor)
 }
 
 ]
@@ -52,6 +57,7 @@ import co.uk.somepackage.UnknownType
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import kotlin.Int
 import test.models.ChildNested
 import test.models.ParentNested
@@ -62,14 +68,15 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class ParentNestedPaginatedKidsDataFetcher(
   public val service: ParentNestedResolver,
   public val deserializer: Deserializer,
+  public val executor: Executor,
 ) : DataFetcher<CompletableFuture<PaginatedResult<ChildNested, UnknownType>>> {
   override fun `get`(env: DataFetchingEnvironment):
       CompletableFuture<PaginatedResult<ChildNested, UnknownType>> {
     val pageSize = env.getArgument("pageSize") as Int? 
     val cursor = env.getArgument<Any>("cursor")?.let { deserializer.deserialize(it,
         UnknownType::class.java) } 
-    return CompletableFuture.supplyAsync { service.paginatedKids(parentNested =
-        env.getSource<ParentNested>(), pageSize = pageSize, cursor = cursor) }
+    return CompletableFuture.supplyAsync({ service.paginatedKids(parentNested =
+        env.getSource<ParentNested>(), pageSize = pageSize, cursor = cursor) }, executor)
   }
 }
 
@@ -82,6 +89,7 @@ package test.datafetchers
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import kotlin.String
 import test.models.TestIto
 import test.resolvers.QueryResolver
@@ -90,11 +98,12 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class QueryAnotherOneMethodDataFetcher(
   public val service: QueryResolver,
   public val deserializer: Deserializer,
+  public val executor: Executor,
 ) : DataFetcher<CompletableFuture<String?>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<String?> {
     val arg = env.getArgument<Any>("arg")?.let { deserializer.deserialize(it, TestIto::class.java) }
         
-    return CompletableFuture.supplyAsync { service.anotherOneMethod(arg = arg) }
+    return CompletableFuture.supplyAsync({ service.anotherOneMethod(arg = arg) }, executor)
   }
 }
 
@@ -108,6 +117,7 @@ import co.uk.somepackage.UnknownType
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import kotlin.Int
 import test.models.TestDto
 import test.models.TestDtoFilter
@@ -118,6 +128,7 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class QueryListDataFetcher(
   public val service: QueryResolver,
   public val deserializer: Deserializer,
+  public val executor: Executor,
 ) : DataFetcher<CompletableFuture<PaginatedResult<TestDto, UnknownType>>> {
   override fun `get`(env: DataFetchingEnvironment):
       CompletableFuture<PaginatedResult<TestDto, UnknownType>> {
@@ -126,8 +137,8 @@ public class QueryListDataFetcher(
     val pageSize = env.getArgument("pageSize") as Int? 
     val cursor = env.getArgument<Any>("cursor")?.let { deserializer.deserialize(it,
         UnknownType::class.java) } 
-    return CompletableFuture.supplyAsync { service.list(where = where, pageSize = pageSize, cursor =
-        cursor) }
+    return CompletableFuture.supplyAsync({ service.list(where = where, pageSize = pageSize, cursor =
+        cursor) }, executor)
   }
 }
 
@@ -140,6 +151,7 @@ package test.datafetchers
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import kotlin.String
 import test.models.TestIto
 import test.resolvers.QueryResolver
@@ -148,11 +160,12 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class QuerySomeMethodDataFetcher(
   public val service: QueryResolver,
   public val deserializer: Deserializer,
+  public val executor: Executor,
 ) : DataFetcher<CompletableFuture<String?>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<String?> {
     val arg = env.getArgument<Any>("arg")?.let { deserializer.deserialize(it, TestIto::class.java) }
         
-    return CompletableFuture.supplyAsync { service.someMethod(arg = arg!!) }
+    return CompletableFuture.supplyAsync({ service.someMethod(arg = arg!!) }, executor)
   }
 }
 
@@ -165,6 +178,7 @@ package test.datafetchers
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import kotlin.collections.List
 import test.models.Results
 import test.resolvers.QueryResolver
@@ -173,9 +187,10 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class QueryStuffDataFetcher(
   public val service: QueryResolver,
   public val deserializer: Deserializer,
+  public val executor: Executor,
 ) : DataFetcher<CompletableFuture<List<Results>>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<Results>> =
-      CompletableFuture.supplyAsync { service.stuff() }
+      CompletableFuture.supplyAsync({ service.stuff() }, executor)
 }
 
 ]
@@ -188,6 +203,7 @@ import co.uk.somepackage.UnknownType
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import kotlin.Int
 import test.models.Results
 import test.models.TestDto
@@ -198,14 +214,15 @@ import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 public class TestDtoResultsDataFetcher(
   public val service: TestDtoResolver,
   public val deserializer: Deserializer,
+  public val executor: Executor,
 ) : DataFetcher<CompletableFuture<PaginatedResult<Results, UnknownType>>> {
   override fun `get`(env: DataFetchingEnvironment):
       CompletableFuture<PaginatedResult<Results, UnknownType>> {
     val pageSize = env.getArgument("pageSize") as Int? 
     val cursor = env.getArgument<Any>("cursor")?.let { deserializer.deserialize(it,
         UnknownType::class.java) } 
-    return CompletableFuture.supplyAsync { service.results(testDto = env.getSource<TestDto>(),
-        pageSize = pageSize, cursor = cursor) }
+    return CompletableFuture.supplyAsync({ service.results(testDto = env.getSource<TestDto>(),
+        pageSize = pageSize, cursor = cursor) }, executor)
   }
 }
 
@@ -450,6 +467,7 @@ package test.resolvers
 
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
+import java.util.concurrent.Executor
 import test.datafetchers.ChildNestedBabiesDataFetcher
 import test.datafetchers.ParentNestedChildrenDataFetcher
 import test.datafetchers.ParentNestedPaginatedKidsDataFetcher
@@ -466,25 +484,26 @@ public class GraphQLCodeDataFetcherRegistry(
   public val queryResolver: QueryResolver,
   public val testDtoResolver: TestDtoResolver,
   public val deserializer: Deserializer,
+  public val executor: Executor,
 ) {
   public fun registerResolvers(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
       GraphQLCodeRegistry.Builder {
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ChildNested", "babies"),
-        ChildNestedBabiesDataFetcher(nodeResolver, deserializer))
+        ChildNestedBabiesDataFetcher(nodeResolver, deserializer, executor))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ParentNested", "children"),
-        ParentNestedChildrenDataFetcher(nodeResolver, deserializer))
+        ParentNestedChildrenDataFetcher(nodeResolver, deserializer, executor))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ParentNested", "paginatedKids"),
-        ParentNestedPaginatedKidsDataFetcher(parentNestedResolver, deserializer))
+        ParentNestedPaginatedKidsDataFetcher(parentNestedResolver, deserializer, executor))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "stuff"),
-        QueryStuffDataFetcher(queryResolver, deserializer))
+        QueryStuffDataFetcher(queryResolver, deserializer, executor))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "someMethod"),
-        QuerySomeMethodDataFetcher(queryResolver, deserializer))
+        QuerySomeMethodDataFetcher(queryResolver, deserializer, executor))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "anotherOneMethod"),
-        QueryAnotherOneMethodDataFetcher(queryResolver, deserializer))
+        QueryAnotherOneMethodDataFetcher(queryResolver, deserializer, executor))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "list"),
-        QueryListDataFetcher(queryResolver, deserializer))
+        QueryListDataFetcher(queryResolver, deserializer, executor))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("TestDto", "results"),
-        TestDtoResultsDataFetcher(testDtoResolver, deserializer))
+        TestDtoResultsDataFetcher(testDtoResolver, deserializer, executor))
     return graphQLCodeRegistry
   }
 }
