@@ -29,5 +29,5 @@ ExecutionResultImpl{errors=[], data={candidates={nodes=[{id=1, firstname=John, l
 
 
 uk.co.lucidsource.GraphQLTest.testQueryUnionResults=[
-ExecutionResultImpl{errors=[], data={candidate={audits={nextCursor=sdsd, nodes=[{changes=[{leftValues=[], property=tags, rightValues=[]}, {left=john, right=doe, property=firstname}]}]}}}, dataPresent=true, extensions=null}
+ExecutionResultImpl{errors=[], data={candidate={audits={nextCursor=sdsd, nodes=[{user={id=1}, changes=[{leftValues=[], property=tags, rightValues=[]}, {left=john, right=doe, property=firstname}]}, {user={id=1}, changes=[{leftValues=[], property=tags, rightValues=[]}, {left=john, right=doe, property=firstname}]}]}}}, dataPresent=true, extensions=null}
 ]

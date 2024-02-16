@@ -12,6 +12,14 @@ object GraphQLTypeNameResolver {
         return this.name + fieldDefinition.name.replaceFirstChar { it.uppercase() } + "DataFetcher"
     }
 
+    fun FieldDefinition.defaultBatchLoaderName(): String {
+        return "batch" + this.name.replaceFirstChar { it.uppercase() }
+    }
+
+    fun ObjectTypeDefinition.defaultBatchDataFetcherName(fieldDefinition: FieldDefinition): String {
+        return this.name + fieldDefinition.name.replaceFirstChar { it.uppercase() } + "BatchDataLoader"
+    }
+
     fun ObjectTypeDefinition.defaultResolverName(): String {
         return this.name + "Resolver"
     }

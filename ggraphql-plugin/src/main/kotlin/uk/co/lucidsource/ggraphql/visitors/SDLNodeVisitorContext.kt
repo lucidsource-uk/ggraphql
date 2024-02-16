@@ -28,5 +28,6 @@ data class SDLNodeVisitorContext(
         val resolverName: String,
         val parameters: Map<String, TypeName>,
         val returnType: TypeName,
+        val isBulk: Boolean = false
     )
 }

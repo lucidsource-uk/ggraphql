@@ -10,26 +10,91 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
+import graphql.language.FieldDefinition
 import graphql.language.ObjectTypeDefinition
 import graphql.language.TypeName
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
+import org.dataloader.BatchLoader
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getResolverAspectResolverName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getReturnsGenerateTypeParameterOf
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.hasBatchLoadingResolverAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isExcludedFromCodeGenerationAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isPaginatedAspectApplied
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultBatchDataFetcherName
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultBatchLoaderName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultDataFetcherName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeUtil
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitor
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 import java.util.concurrent.Executor
 
 class KotlinDataFetcherTypeGenerator(
     private val typeResolver: KotlinTypeResolver
 ) : SDLNodeVisitor {
+
+    private fun buildBatchLoader(
+        objectTypeDefinition: ObjectTypeDefinition,
+        fieldDefinition: FieldDefinition,
+        context: SDLNodeVisitorContext
+    ) {
+        val serviceName = fieldDefinition.getResolverAspectResolverName()!!
+        val sourceType = typeResolver.getKotlinTypeForModel(TypeName(objectTypeDefinition.name)).copy(nullable = false)
+        val returnType = typeResolver.getKotlinTypeForModel(fieldDefinition.type)
+
+        val loadMethod = FunSpec.builder("load")
+            .addParameter("keys", MutableList::class.asTypeName().parameterizedBy(sourceType))
+            .addModifiers(KModifier.OVERRIDE)
+            .addCode(
+                CodeBlock.of(
+                    """
+                return %T.supplyAsync({ service.%L(keys) }, executor)
+            """,
+                    CompletableFuture::class,
+                    fieldDefinition.defaultBatchLoaderName()
+                )
+            )
+            .returns(
+                CompletionStage::class.asClassName()
+                    .parameterizedBy(
+                        MutableList::class.asClassName()
+                            .parameterizedBy(returnType.copy(nullable = false))
+                    )
+            )
+            .build()
+
+        context.typeSpecs += FileSpec.get(
+            typeResolver.getDataFetcherPackageName(),
+            TypeSpec.classBuilder(objectTypeDefinition.defaultBatchDataFetcherName(fieldDefinition))
+                .addSuperinterface(
+                    BatchLoader::class.asTypeName()
+                        .parameterizedBy(sourceType.copy(nullable = false), returnType.copy(nullable = false))
+                )
+                .addProperty(
+                    PropertySpec.builder("service", typeResolver.getResolverTypeForName(serviceName))
+                        .initializer("service")
+                        .build()
+                )
+                .addProperty(
+                    PropertySpec.builder("executor", Executor::class)
+                        .initializer("executor")
+                        .build()
+                )
+                .primaryConstructor(
+                    FunSpec.constructorBuilder()
+                        .addParameter("service", typeResolver.getResolverTypeForName(serviceName))
+                        .addParameter("executor", Executor::class)
+                        .build()
+                )
+                .addFunction(loadMethod)
+                .build()
+        )
+    }
+
     override fun visitObjectType(
         objectTypeDefinition: ObjectTypeDefinition,
         context: SDLNodeVisitorContext
@@ -61,6 +126,19 @@ class KotlinDataFetcherTypeGenerator(
                     )
                 }.toMutableMap()
 
+                if (field.hasBatchLoadingResolverAspectApplied()) {
+                    buildBatchLoader(objectTypeDefinition, field, context)
+                    dataFetcherGet.addCode(
+                        CodeBlock.of(
+                            "val dataLoader = env.getDataLoader<%T, %T>(%S) \n",
+                            typeResolver.getKotlinTypeForModel(TypeName(objectTypeDefinition.name))
+                                .copy(nullable = false),
+                            returnType,
+                            objectTypeDefinition.defaultBatchDataFetcherName(field)
+                        )
+                    )
+                }
+
                 if (!objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
                     parameters.put(
                         objectTypeDefinition.name.replaceFirstChar { it.lowercase() },
@@ -90,7 +168,15 @@ class KotlinDataFetcherTypeGenerator(
                     }
                 }
 
-                if (objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
+                if (field.hasBatchLoadingResolverAspectApplied()) {
+                    dataFetcherGet.addCode(
+                        CodeBlock.of(
+                            "return dataLoader.load(env.getSource<%T>()) ",
+                            typeResolver.getKotlinTypeForModel(TypeName(objectTypeDefinition.name))
+                                .copy(nullable = false)
+                        )
+                    )
+                } else if (objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
                     dataFetcherGet.addCode(
                         CodeBlock.of(
                             "return CompletableFuture.supplyAsync({ service.%L(%L) }, executor)",
@@ -186,7 +272,8 @@ class KotlinDataFetcherTypeGenerator(
                     fieldName = field.name,
                     objectTypeName = objectTypeDefinition.name,
                     parameters = parameters,
-                    returnType = returnType
+                    returnType = returnType,
+                    isBulk = field.hasBatchLoadingResolverAspectApplied()
                 )
             }
     }

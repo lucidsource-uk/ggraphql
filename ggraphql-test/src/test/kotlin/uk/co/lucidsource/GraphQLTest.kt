@@ -4,6 +4,8 @@ import au.com.origin.snapshots.Expect
 import au.com.origin.snapshots.junit5.SnapshotExtension
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import graphql.ExecutionInput
+import graphql.ExecutionInput.newExecutionInput
 import graphql.GraphQL
 import graphql.Scalars
 import graphql.execution.AsyncExecutionStrategy
@@ -13,29 +15,32 @@ import graphql.schema.GraphQLScalarType
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
+import org.dataloader.DataLoaderRegistry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import uk.co.lucidsource.generated.models.Candidate
 import uk.co.lucidsource.generated.models.CandidateFilter
 import uk.co.lucidsource.generated.models.CandidateInput
-import uk.co.lucidsource.generated.resolvers.CandidateResolver
 import uk.co.lucidsource.generated.models.CandidateStatus
 import uk.co.lucidsource.generated.models.CandidateStatusAggregation
 import uk.co.lucidsource.generated.models.ChangeItemList
 import uk.co.lucidsource.generated.models.ChangeItemValue
 import uk.co.lucidsource.generated.models.ChangeLog
 import uk.co.lucidsource.generated.models.ChangeLogType
-import uk.co.lucidsource.generated.resolvers.GraphQLCodeDataFetcherRegistry
-import uk.co.lucidsource.generated.resolvers.QueryTResolver
 import uk.co.lucidsource.generated.models.SuccessResponse
 import uk.co.lucidsource.generated.models.User
+import uk.co.lucidsource.generated.resolvers.CandidateResolver
+import uk.co.lucidsource.generated.resolvers.GraphQLCodeRegistryConfiguration
+import uk.co.lucidsource.generated.resolvers.QueryTResolver
 import uk.co.lucidsource.generated.resolvers.UserResolver
+import uk.co.lucidsource.generated.wiring.DataLoaderRegistryConfiguration
 import uk.co.lucidsource.generated.wiring.TypeResolverWiring
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 import java.io.File
 import java.util.Date
 import java.util.concurrent.ForkJoinPool
+
 
 @ExtendWith(value = [SnapshotExtension::class])
 class GraphQLTest {
@@ -60,6 +65,14 @@ class GraphQLTest {
         )
 
         val CHANGE_LOGS: List<ChangeLog> = listOf(
+            ChangeLog(
+                changes = listOf(
+                    ChangeItemList(leftValues = listOf(), property = "tags", rightValues = listOf()),
+                    ChangeItemValue(left = "john", property = "firstname", right = "doe")
+                ),
+                time = Date(),
+                type = ChangeLogType.CREATED
+            ),
             ChangeLog(
                 changes = listOf(
                     ChangeItemList(leftValues = listOf(), property = "tags", rightValues = listOf()),
@@ -146,8 +159,8 @@ class GraphQLTest {
     }
 
     class MockUserResolver : UserResolver {
-        override fun user(changeLog: ChangeLog): User? {
-            return User(id = "1", email = "test@emai.com", avatarUrl = null)
+        override fun batchUser(changeLog: List<ChangeLog>): List<User> {
+            return changeLog.map { User(id = "1", email = "test@emai.com", avatarUrl = null) }
         }
     }
 
@@ -163,13 +176,14 @@ class GraphQLTest {
 
         val wiring = RuntimeWiring.newRuntimeWiring()
             .codeRegistry(
-                GraphQLCodeDataFetcherRegistry(
+                GraphQLCodeRegistryConfiguration(
                     candidateResolver = MockCandidateResolver(candidates, changeLogs),
                     queryTResolver = MockQueryResolver(candidates),
                     userResolver = MockUserResolver(),
                     deserializer = deserializer,
                     executor = ForkJoinPool()
-                ).registerResolvers(newCodeRegistry()).build()
+                ).applyConfiguration(newCodeRegistry())
+                    .build()
             )
 
         wiring.scalar(ExtendedScalars.DateTime)
@@ -193,9 +207,17 @@ class GraphQLTest {
     @Test
     fun testQueryUnionResults() {
         val graphQL = buildSchema(CANDIDATES.toMutableList(), CHANGE_LOGS.toMutableList())
+        val registry = DataLoaderRegistryConfiguration(MockUserResolver(), ForkJoinPool())
+            .applyConfiguration(DataLoaderRegistry.newRegistry())
+            .build()
+
+        val executionInput: ExecutionInput = newExecutionInput()
+            .query("""{ candidate(candidateId: "1") { audits { nextCursor, nodes { user { id }, changes { ... on ChangeItemValue { left, right, property } ... on ChangeItemList { leftValues, property, rightValues } } } } } }""")
+            .dataLoaderRegistry(registry)
+            .build()
 
         val result =
-            graphQL.execute("""{ candidate(candidateId: "1") { audits { nextCursor, nodes { changes { ... on ChangeItemValue { left, right, property } ... on ChangeItemList { leftValues, property, rightValues } } } } } }""")
+            graphQL.execute(executionInput)
 
         expect.toMatchSnapshot(result)
     }

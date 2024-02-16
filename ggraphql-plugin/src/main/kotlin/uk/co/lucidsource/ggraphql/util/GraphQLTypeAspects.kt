@@ -11,6 +11,7 @@ import graphql.language.Type
 object GraphQLTypeAspects {
     private const val FILTER_FOR_OBJECT_TYPE = "FILTER_FOR_OBJECT_TYPE"
     private const val RETURNS_TYPE_PARAMETER_OF_TYPE = "RETURNS_TYPE_PARAMETER_OF_TYPE"
+    private const val RESOLVER_IS_BULK_LOADING = "RESOLVER_IS_BULK_LOADING"
 
     private const val PAGINATED_DIRECTIVE = "paginated"
     private const val IGNORE_TYPE_DIRECTIVE = "ignore"
@@ -67,6 +68,14 @@ object GraphQLTypeAspects {
         return (this.getDirectives(RESOLVED_DIRECTIVE)
             .first()
             .argumentsByName["name"]?.value as? StringValue)?.value
+    }
+
+    fun FieldDefinition.Builder.applyBatchLoadingResolverAspect(): FieldDefinition.Builder {
+        return this.additionalData(RESOLVER_IS_BULK_LOADING, RESOLVER_IS_BULK_LOADING)
+    }
+
+    fun FieldDefinition.hasBatchLoadingResolverAspectApplied(): Boolean {
+        return this.additionalData[RESOLVER_IS_BULK_LOADING] != null
     }
 
     fun FieldDefinition.Builder.applyGeneratesResolverAspect(

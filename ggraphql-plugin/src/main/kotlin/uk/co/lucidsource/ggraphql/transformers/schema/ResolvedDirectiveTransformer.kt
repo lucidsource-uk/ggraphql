@@ -3,9 +3,11 @@ package uk.co.lucidsource.ggraphql.transformers.schema
 import graphql.language.ObjectTypeDefinition
 import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformer
 import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformerContext
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyBatchLoadingResolverAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyExcludeFromCodeGenerationAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyGeneratesResolverAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getResolverAspectResolverName
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isPaginatedAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultResolverName
 
 class ResolvedDirectiveTransformer : SDLNodeTransformer {
@@ -35,6 +37,21 @@ class ResolvedDirectiveTransformer : SDLNodeTransformer {
             }
         }
 
-        return objectTypeDefinition
+        return objectTypeDefinition.transform { objectBuilder ->
+            val newFields =
+                objectTypeDefinition.fieldDefinitions
+                    .filter { it.getResolverAspectResolverName() != null && it.inputValueDefinitions.isEmpty() && !it.isPaginatedAspectApplied() }
+                    .map { field ->
+                        field.transform { fieldBuilder ->
+                            fieldBuilder.applyBatchLoadingResolverAspect()
+                                .build()
+                        }
+                    }
+
+            objectBuilder.fieldDefinitions(newFields + objectTypeDefinition.fieldDefinitions
+                .filter {
+                    !(it.getResolverAspectResolverName() != null && it.inputValueDefinitions.isEmpty() && !it.isPaginatedAspectApplied())
+                })
+        }
     }
 }
