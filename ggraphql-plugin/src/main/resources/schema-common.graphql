@@ -1,5 +1,3 @@
-"https://spec.graphql.org/June2018/"
-
 enum FilterOperator {
     EQ
     LIKE
@@ -10,8 +8,9 @@ enum FilterOperator {
     LT_EQ
 }
 
-directive @scalarType(type: String) on SCALAR
+directive @type(type: String) on SCALAR
 directive @ignore on OBJECT
+directive @batchLoader on FIELD_DEFINITION
 directive @resolver(name: String!) on FIELD_DEFINITION
 directive @filter(operators: [FilterOperator!]!) on FIELD_DEFINITION
 directive @filtered on FIELD_DEFINITION

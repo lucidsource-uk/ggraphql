@@ -25,7 +25,7 @@ repositories {
 
 configure<GraphqlPluginExtension> {
     packageName = "uk.co.lucidsource.generated"
-    schemas.addAll("scalars.graphql", "directives.graphql", "schema.graphql")
+    schemas.addAll("schema.graphql")
     schemaDirectory = layout.projectDirectory
     schemaOutFile = layout.projectDirectory.file("src/test/resources/schema.graphql")
     kotlinOutputDirectory = layout.buildDirectory.dir("graphql-generated/src/kotlin")

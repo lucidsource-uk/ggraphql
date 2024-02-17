@@ -1,4 +1,4 @@
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/ChildNestedBabiesBatchDataLoader.kt]=[
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/BabyNestedCreatedByBatchDataLoader.kt]=[
 package test.datafetchers
 
 import java.util.concurrent.CompletableFuture
@@ -7,17 +7,95 @@ import java.util.concurrent.Executor
 import kotlin.collections.List
 import org.dataloader.BatchLoader
 import test.models.BabyNested
-import test.models.ChildNested
-import test.resolvers.NodeResolver
+import test.models.User
+import test.resolvers.UserResolver
 
-public class ChildNestedBabiesBatchDataLoader(
-  public val service: NodeResolver,
+public class BabyNestedCreatedByBatchDataLoader(
+  public val service: UserResolver,
   public val executor: Executor,
-) : BatchLoader<ChildNested, List<BabyNested?>> {
-  override fun load(keys: List<ChildNested>): CompletionStage<List<List<BabyNested?>>> {
+) : BatchLoader<BabyNested, User> {
+  override fun load(keys: List<BabyNested>): CompletionStage<List<User>> {
 
-                    return CompletableFuture.supplyAsync({ service.batchBabies(keys) }, executor)
+                    return CompletableFuture.supplyAsync({ service.batchCreatedBy(keys) }, executor)
                 
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/BabyNestedCreatedByDataFetcher.kt]=[
+package test.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import test.models.BabyNested
+import test.models.User
+import test.resolvers.UserResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class BabyNestedCreatedByDataFetcher(
+  public val service: UserResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<User>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User> {
+    val dataLoader = env.getDataLoader<BabyNested, User>("BabyNestedCreatedByBatchDataLoader") 
+    return dataLoader.load(env.getSource<BabyNested>()) 
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/BabyNestedUpdatedByBatchDataLoader.kt]=[
+package test.datafetchers
+
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
+import java.util.concurrent.Executor
+import kotlin.collections.List
+import org.dataloader.BatchLoader
+import test.models.BabyNested
+import test.models.User
+import test.resolvers.UserResolver
+
+public class BabyNestedUpdatedByBatchDataLoader(
+  public val service: UserResolver,
+  public val executor: Executor,
+) : BatchLoader<BabyNested, User> {
+  override fun load(keys: List<BabyNested>): CompletionStage<List<User>> {
+
+                    return CompletableFuture.supplyAsync({ service.batchUpdatedBy(keys) }, executor)
+                
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/BabyNestedUpdatedByDataFetcher.kt]=[
+package test.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import test.models.BabyNested
+import test.models.User
+import test.resolvers.UserResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class BabyNestedUpdatedByDataFetcher(
+  public val service: UserResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<User?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User?> {
+    val dataLoader = env.getDataLoader<BabyNested, User?>("BabyNestedUpdatedByBatchDataLoader") 
+    return dataLoader.load(env.getSource<BabyNested>()) 
   }
 }
 
@@ -42,37 +120,9 @@ public class ChildNestedBabiesDataFetcher(
   public val deserializer: Deserializer,
   public val executor: Executor,
 ) : DataFetcher<CompletableFuture<List<BabyNested?>?>> {
-  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<BabyNested?>?> {
-    val dataLoader = env.getDataLoader<ChildNested,
-        List<BabyNested?>?>("ChildNestedBabiesBatchDataLoader") 
-    return dataLoader.load(env.getSource<ChildNested>()) 
-  }
-}
-
-]
-
-
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/ChildNestedBabiesReqBatchDataLoader.kt]=[
-package test.datafetchers
-
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionStage
-import java.util.concurrent.Executor
-import kotlin.collections.List
-import org.dataloader.BatchLoader
-import test.models.BabyNested
-import test.models.ChildNested
-import test.resolvers.NodeResolver
-
-public class ChildNestedBabiesReqBatchDataLoader(
-  public val service: NodeResolver,
-  public val executor: Executor,
-) : BatchLoader<ChildNested, List<BabyNested>> {
-  override fun load(keys: List<ChildNested>): CompletionStage<List<List<BabyNested>>> {
-
-                    return CompletableFuture.supplyAsync({ service.batchBabiesReq(keys) }, executor)
-                
-  }
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<BabyNested?>?> =
+      CompletableFuture.supplyAsync({ service.babies(childNested = env.getSource<ChildNested>(), )
+      }, executor)
 }
 
 ]
@@ -96,37 +146,9 @@ public class ChildNestedBabiesReqDataFetcher(
   public val deserializer: Deserializer,
   public val executor: Executor,
 ) : DataFetcher<CompletableFuture<List<BabyNested>>> {
-  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<BabyNested>> {
-    val dataLoader = env.getDataLoader<ChildNested,
-        List<BabyNested>>("ChildNestedBabiesReqBatchDataLoader") 
-    return dataLoader.load(env.getSource<ChildNested>()) 
-  }
-}
-
-]
-
-
-uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/ParentNestedChildrenBatchDataLoader.kt]=[
-package test.datafetchers
-
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionStage
-import java.util.concurrent.Executor
-import kotlin.collections.List
-import org.dataloader.BatchLoader
-import test.models.ChildNested
-import test.models.ParentNested
-import test.resolvers.NodeResolver
-
-public class ParentNestedChildrenBatchDataLoader(
-  public val service: NodeResolver,
-  public val executor: Executor,
-) : BatchLoader<ParentNested, List<ChildNested?>> {
-  override fun load(keys: List<ParentNested>): CompletionStage<List<List<ChildNested?>>> {
-
-                    return CompletableFuture.supplyAsync({ service.batchChildren(keys) }, executor)
-                
-  }
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<BabyNested>> =
+      CompletableFuture.supplyAsync({ service.babiesReq(childNested = env.getSource<ChildNested>(),
+      ) }, executor)
 }
 
 ]
@@ -150,11 +172,9 @@ public class ParentNestedChildrenDataFetcher(
   public val deserializer: Deserializer,
   public val executor: Executor,
 ) : DataFetcher<CompletableFuture<List<ChildNested?>?>> {
-  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<ChildNested?>?> {
-    val dataLoader = env.getDataLoader<ParentNested,
-        List<ChildNested?>?>("ParentNestedChildrenBatchDataLoader") 
-    return dataLoader.load(env.getSource<ParentNested>()) 
-  }
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<ChildNested?>?> =
+      CompletableFuture.supplyAsync({ service.children(parentNested = env.getSource<ParentNested>(),
+      ) }, executor)
 }
 
 ]
@@ -572,12 +592,27 @@ public data class TestIto(
 ]
 
 
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/models/User.kt]=[
+package test.models
+
+import kotlin.String
+
+public data class User(
+  public val id: String?,
+  public val name: String?,
+)
+
+]
+
+
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/GraphQLCodeRegistryConfiguration.kt]=[
 package test.resolvers
 
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
 import java.util.concurrent.Executor
+import test.datafetchers.BabyNestedCreatedByDataFetcher
+import test.datafetchers.BabyNestedUpdatedByDataFetcher
 import test.datafetchers.ChildNestedBabiesDataFetcher
 import test.datafetchers.ChildNestedBabiesReqDataFetcher
 import test.datafetchers.ParentNestedChildrenDataFetcher
@@ -590,6 +625,7 @@ import test.datafetchers.TestDtoResultsDataFetcher
 import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 
 public class GraphQLCodeRegistryConfiguration(
+  public val userResolver: UserResolver,
   public val nodeResolver: NodeResolver,
   public val parentNestedResolver: ParentNestedResolver,
   public val queryResolver: QueryResolver,
@@ -599,6 +635,10 @@ public class GraphQLCodeRegistryConfiguration(
 ) {
   public fun applyConfiguration(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
       GraphQLCodeRegistry.Builder {
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("BabyNested", "createdBy"),
+        BabyNestedCreatedByDataFetcher(userResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("BabyNested", "updatedBy"),
+        BabyNestedUpdatedByDataFetcher(userResolver, deserializer, executor))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ChildNested", "babies"),
         ChildNestedBabiesDataFetcher(nodeResolver, deserializer, executor))
     graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ChildNested", "babiesReq"),
@@ -633,11 +673,11 @@ import test.models.ChildNested
 import test.models.ParentNested
 
 public interface NodeResolver {
-  public fun batchBabies(childNested: List<ChildNested>): List<List<BabyNested?>>
+  public fun babies(childNested: ChildNested): List<BabyNested?>?
 
-  public fun batchBabiesReq(childNested: List<ChildNested>): List<List<BabyNested>>
+  public fun babiesReq(childNested: ChildNested): List<BabyNested>
 
-  public fun batchChildren(parentNested: List<ParentNested>): List<List<ChildNested?>>
+  public fun children(parentNested: ParentNested): List<ChildNested?>?
 }
 
 ]
@@ -713,30 +753,41 @@ public interface TestDtoResolver {
 ]
 
 
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/resolvers/UserResolver.kt]=[
+package test.resolvers
+
+import kotlin.collections.List
+import test.models.BabyNested
+import test.models.User
+
+public interface UserResolver {
+  public fun batchCreatedBy(babyNested: List<BabyNested>): List<User>
+
+  public fun batchUpdatedBy(babyNested: List<BabyNested>): List<User>
+}
+
+]
+
+
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/wiring/DataLoaderRegistryConfiguration.kt]=[
 package test.wiring
 
 import java.util.concurrent.Executor
 import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderRegistry
-import test.datafetchers.ChildNestedBabiesBatchDataLoader
-import test.datafetchers.ChildNestedBabiesReqBatchDataLoader
-import test.datafetchers.ParentNestedChildrenBatchDataLoader
-import test.resolvers.NodeResolver
+import test.datafetchers.BabyNestedCreatedByBatchDataLoader
+import test.datafetchers.BabyNestedUpdatedByBatchDataLoader
+import test.resolvers.UserResolver
 
 public class DataLoaderRegistryConfiguration(
-  public val nodeResolver: NodeResolver,
+  public val userResolver: UserResolver,
   public val executor: Executor,
 ) {
   public fun applyConfiguration(registry: DataLoaderRegistry.Builder): DataLoaderRegistry.Builder {
-    registry.register("ChildNestedBabiesBatchDataLoader",
-        DataLoaderFactory.newDataLoader(ChildNestedBabiesBatchDataLoader(nodeResolver, executor)))
-    registry.register("ChildNestedBabiesReqBatchDataLoader",
-        DataLoaderFactory.newDataLoader(ChildNestedBabiesReqBatchDataLoader(nodeResolver,
-        executor)))
-    registry.register("ParentNestedChildrenBatchDataLoader",
-        DataLoaderFactory.newDataLoader(ParentNestedChildrenBatchDataLoader(nodeResolver,
-        executor)))
+    registry.register("BabyNestedCreatedByBatchDataLoader",
+        DataLoaderFactory.newDataLoader(BabyNestedCreatedByBatchDataLoader(userResolver, executor)))
+    registry.register("BabyNestedUpdatedByBatchDataLoader",
+        DataLoaderFactory.newDataLoader(BabyNestedUpdatedByBatchDataLoader(userResolver, executor)))
     return registry
   }
 }
@@ -818,26 +869,28 @@ public object TypeResolverWiring {
 
 
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[generated-files]=[
-/test/datafetchers/QueryAnotherOneMethodDataFetcher.kt,/test/datafetchers/ChildNestedBabiesBatchDataLoader.kt,/test/datafetchers/ChildNestedBabiesReqBatchDataLoader.kt,/test/datafetchers/ParentNestedChildrenDataFetcher.kt,/test/datafetchers/QueryStuffDataFetcher.kt,/test/datafetchers/ParentNestedChildrenBatchDataLoader.kt,/test/datafetchers/QuerySomeMethodDataFetcher.kt,/test/datafetchers/ChildNestedBabiesDataFetcher.kt,/test/datafetchers/ParentNestedPaginatedKidsDataFetcher.kt,/test/datafetchers/TestDtoResultsDataFetcher.kt,/test/datafetchers/QueryListDataFetcher.kt,/test/datafetchers/ChildNestedBabiesReqDataFetcher.kt,/test/wiring/IdentifiedEntityTypeResolver.kt,/test/wiring/ResultsTypeResolver.kt,/test/wiring/DataLoaderRegistryConfiguration.kt,/test/wiring/TypeResolverWiring.kt,/test/resolvers/QueryResolver.kt,/test/resolvers/GraphQLCodeRegistryConfiguration.kt,/test/resolvers/NodeResolver.kt,/test/resolvers/ParentNestedResolver.kt,/test/resolvers/TestDtoResolver.kt,/test/models/IdentifiedEntity.kt,/test/models/BabyNested.kt,/test/models/ChildNested.kt,/test/models/OtherDto.kt,/test/models/TestDtoFilterCriteria.kt,/test/models/Results.kt,/test/models/ParentNested.kt,/test/models/TestDtoFilter.kt,/test/models/TestDto.kt,/test/models/TestIto.kt,/test/models/TestDtoAgeFilterCriteria.kt,/test/models/TestDtoNameFilterCriteria.kt
+/test/datafetchers/QueryAnotherOneMethodDataFetcher.kt,/test/datafetchers/BabyNestedCreatedByBatchDataLoader.kt,/test/datafetchers/BabyNestedUpdatedByBatchDataLoader.kt,/test/datafetchers/ParentNestedChildrenDataFetcher.kt,/test/datafetchers/QueryStuffDataFetcher.kt,/test/datafetchers/QuerySomeMethodDataFetcher.kt,/test/datafetchers/ChildNestedBabiesDataFetcher.kt,/test/datafetchers/ParentNestedPaginatedKidsDataFetcher.kt,/test/datafetchers/TestDtoResultsDataFetcher.kt,/test/datafetchers/QueryListDataFetcher.kt,/test/datafetchers/BabyNestedCreatedByDataFetcher.kt,/test/datafetchers/ChildNestedBabiesReqDataFetcher.kt,/test/datafetchers/BabyNestedUpdatedByDataFetcher.kt,/test/wiring/IdentifiedEntityTypeResolver.kt,/test/wiring/ResultsTypeResolver.kt,/test/wiring/DataLoaderRegistryConfiguration.kt,/test/wiring/TypeResolverWiring.kt,/test/resolvers/UserResolver.kt,/test/resolvers/QueryResolver.kt,/test/resolvers/GraphQLCodeRegistryConfiguration.kt,/test/resolvers/NodeResolver.kt,/test/resolvers/ParentNestedResolver.kt,/test/resolvers/TestDtoResolver.kt,/test/models/IdentifiedEntity.kt,/test/models/BabyNested.kt,/test/models/ChildNested.kt,/test/models/OtherDto.kt,/test/models/TestDtoFilterCriteria.kt,/test/models/User.kt,/test/models/Results.kt,/test/models/ParentNested.kt,/test/models/TestDtoFilter.kt,/test/models/TestDto.kt,/test/models/TestIto.kt,/test/models/TestDtoAgeFilterCriteria.kt,/test/models/TestDtoNameFilterCriteria.kt
 ]
 
 
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[schema.graphql]=[
 interface IdentifiedEntity {
-  id: String
+  id: ID
 }
 
 union Results = OtherDto | TestDto
 
 type BabyNested {
-  id: String
+  createdBy: User!
+  id: ID
   name: String
+  updatedBy: User
 }
 
 type ChildNested {
   babies: [BabyNested]
   babiesReq: [BabyNested!]!
-  id: String
+  id: ID
   name: String
 }
 
@@ -850,12 +903,12 @@ type ChildNestedPaginatedResult {
 }
 
 type OtherDto {
-  id: String
+  id: ID
 }
 
 type ParentNested {
   children: [ChildNested]
-  id: String
+  id: ID
   name: String
   paginatedKids(cursor: PaginationCursor, pageSize: Int = 10): ChildNestedPaginatedResult!
 }
@@ -878,7 +931,7 @@ type ResultsPaginatedResult {
 type TestDto implements IdentifiedEntity {
   age: Int!
   createAt: DateTime
-  id: String
+  id: ID
   name: String!
   results(cursor: PaginationCursor, pageSize: Int = 10): ResultsPaginatedResult!
 }
@@ -889,6 +942,11 @@ type TestDtoPaginatedResult {
   pageNumber: Int!
   previousCursor: PaginationCursor
   total: Int!
+}
+
+type User {
+  id: ID
+  name: String
 }
 
 enum FilterOperator {

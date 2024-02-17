@@ -46,10 +46,11 @@ type ChangeItemValue {
 
 type ChangeLog {
   changes: [ChangeItem!]!
+  otherUser: User
   "ISO-8601"
   time: DateTime!
   type: ChangeLogType!
-  user: User
+  user: User!
 }
 
 type ChangeLogPaginatedResult {
@@ -98,7 +99,6 @@ enum ChangeLogType {
   MODIFIED
 }
 
-"https://spec.graphql.org/June2018/"
 enum FilterOperator {
   EQ
   GT

@@ -18,7 +18,7 @@ class GenerateTest {
     @field:TempDir
     lateinit var schemaOutputDirectory: File
 
-    lateinit var expect: Expect
+    private lateinit var expect: Expect
 
     @Test
     fun testGenerate() {

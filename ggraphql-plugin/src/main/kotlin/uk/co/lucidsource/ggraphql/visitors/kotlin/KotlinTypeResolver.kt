@@ -7,8 +7,9 @@ import com.squareup.kotlinpoet.asTypeName
 import graphql.language.ListType
 import graphql.language.NonNullType
 import graphql.language.ScalarTypeDefinition
-import graphql.language.StringValue
 import graphql.language.Type
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getAppliedTypeNameForTypeAspect
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isTypeAspectApplied
 
 class KotlinTypeResolver(
     private val basePackageName: String,
@@ -24,11 +25,9 @@ class KotlinTypeResolver(
         )
 
         fun fromScalars(packageName: String, scalars: List<ScalarTypeDefinition>): KotlinTypeResolver {
-            val additionalTypes = scalars.filter { it.hasDirective("scalarType") }
-                .map {
-                    val type = it.getDirectives("scalarType").first().argumentsByName["type"]!!.value as StringValue
-                    it.name to ClassName.bestGuess(type.value)
-                }.toMap()
+            val additionalTypes = scalars.filter { it.isTypeAspectApplied() }.associate {
+                it.name to ClassName.bestGuess(it.getAppliedTypeNameForTypeAspect())
+            }
 
             return KotlinTypeResolver(packageName, additionalTypes)
         }

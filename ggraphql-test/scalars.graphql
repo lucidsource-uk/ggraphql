@@ -1,2 +1,0 @@
-scalar DateTime @scalarType(type: "java.util.Date")
-scalar PaginationCursor @scalarType(type: "uk.co.lucidsource.SimpleToken")

@@ -20,7 +20,7 @@ import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getResolverAspectResolverName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getReturnsGenerateTypeParameterOf
-import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.hasBatchLoadingResolverAspectApplied
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isBatchDataLoaderResolverAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isExcludedFromCodeGenerationAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isPaginatedAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultBatchDataFetcherName
@@ -126,7 +126,7 @@ class KotlinDataFetcherTypeGenerator(
                     )
                 }.toMutableMap()
 
-                if (field.hasBatchLoadingResolverAspectApplied()) {
+                if (field.isBatchDataLoaderResolverAspectApplied()) {
                     buildBatchLoader(objectTypeDefinition, field, context)
                     dataFetcherGet.addCode(
                         CodeBlock.of(
@@ -168,7 +168,7 @@ class KotlinDataFetcherTypeGenerator(
                     }
                 }
 
-                if (field.hasBatchLoadingResolverAspectApplied()) {
+                if (field.isBatchDataLoaderResolverAspectApplied()) {
                     dataFetcherGet.addCode(
                         CodeBlock.of(
                             "return dataLoader.load(env.getSource<%T>()) ",
@@ -273,7 +273,7 @@ class KotlinDataFetcherTypeGenerator(
                     objectTypeName = objectTypeDefinition.name,
                     parameters = parameters,
                     returnType = returnType,
-                    isBulk = field.hasBatchLoadingResolverAspectApplied()
+                    isBulk = field.isBatchDataLoaderResolverAspectApplied()
                 )
             }
     }

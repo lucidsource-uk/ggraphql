@@ -1,0 +1,3 @@
+schema:
+  - ../../main/resources/schema-common.graphql
+  - simple-schema.graphql

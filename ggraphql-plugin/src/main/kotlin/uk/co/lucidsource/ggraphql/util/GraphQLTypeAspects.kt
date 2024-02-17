@@ -2,26 +2,37 @@ package uk.co.lucidsource.ggraphql.util
 
 import graphql.language.Argument
 import graphql.language.Directive
+import graphql.language.DirectivesContainer
 import graphql.language.FieldDefinition
 import graphql.language.InputObjectTypeDefinition
-import graphql.language.ObjectTypeDefinition
+import graphql.language.NodeDirectivesBuilder
 import graphql.language.StringValue
 import graphql.language.Type
 
 object GraphQLTypeAspects {
     private const val FILTER_FOR_OBJECT_TYPE = "FILTER_FOR_OBJECT_TYPE"
     private const val RETURNS_TYPE_PARAMETER_OF_TYPE = "RETURNS_TYPE_PARAMETER_OF_TYPE"
-    private const val RESOLVER_IS_BULK_LOADING = "RESOLVER_IS_BULK_LOADING"
+    private const val FILTER_FIELD_NAME = "FILTER_FIELD_NAME"
 
     private const val PAGINATED_DIRECTIVE = "paginated"
     private const val IGNORE_TYPE_DIRECTIVE = "ignore"
     private const val RESOLVED_DIRECTIVE = "resolver"
-    private const val FILTER_FIELD_NAME = "FILTER_FIELD_NAME"
+    private const val BATCH_LOADER_DIRECTIVE = "batchLoader"
+    private const val TYPE_DIRECTIVE = "type"
 
     enum class FilterAspectType {
         EXPRESSION,
         OBJECT_CRITERIA,
         FIELD_CRITERIA
+    }
+
+    fun DirectivesContainer<*>.isTypeAspectApplied(): Boolean {
+        return this.hasDirective(TYPE_DIRECTIVE)
+    }
+
+    fun DirectivesContainer<*>.getAppliedTypeNameForTypeAspect(): String {
+        val type = this.getDirectives("type").first().argumentsByName["type"]!!.value as StringValue
+        return type.value
     }
 
     fun InputObjectTypeDefinition.isFilterForTypeAspectApplied()
@@ -51,12 +62,12 @@ object GraphQLTypeAspects {
         return this
     }
 
-    fun ObjectTypeDefinition.Builder.applyExcludeFromCodeGenerationAspect(): ObjectTypeDefinition.Builder {
+    fun <T : NodeDirectivesBuilder> T.applyExcludeFromCodeGenerationAspect(): T {
         this.directive(Directive(IGNORE_TYPE_DIRECTIVE))
         return this
     }
 
-    fun ObjectTypeDefinition.isExcludedFromCodeGenerationAspectApplied(): Boolean {
+    fun DirectivesContainer<*>.isExcludedFromCodeGenerationAspectApplied(): Boolean {
         return this.hasDirective(IGNORE_TYPE_DIRECTIVE)
     }
 
@@ -70,12 +81,8 @@ object GraphQLTypeAspects {
             .argumentsByName["name"]?.value as? StringValue)?.value
     }
 
-    fun FieldDefinition.Builder.applyBatchLoadingResolverAspect(): FieldDefinition.Builder {
-        return this.additionalData(RESOLVER_IS_BULK_LOADING, RESOLVER_IS_BULK_LOADING)
-    }
-
-    fun FieldDefinition.hasBatchLoadingResolverAspectApplied(): Boolean {
-        return this.additionalData[RESOLVER_IS_BULK_LOADING] != null
+    fun FieldDefinition.isBatchDataLoaderResolverAspectApplied(): Boolean {
+        return this.hasDirective(BATCH_LOADER_DIRECTIVE)
     }
 
     fun FieldDefinition.Builder.applyGeneratesResolverAspect(

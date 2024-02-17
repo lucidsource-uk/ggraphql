@@ -1,3 +1,6 @@
+scalar DateTime @type(type: "java.util.Date")
+scalar PaginationCursor @type(type: "uk.co.lucidsource.SimpleToken")
+
 interface IdentifiedEntity {
     id: String
 }
@@ -36,7 +39,8 @@ type ChangeLog {
     "ISO-8601"
     time: DateTime!
     type: ChangeLogType!
-    user: User @resolver(name: "UserResolver")
+    user: User! @resolver(name: "UserResolver") @batchLoader
+    otherUser: User @resolver(name: "UserResolver")
 }
 
 schema {

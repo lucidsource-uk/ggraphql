@@ -1,4 +1,3 @@
 schema:
-  - scalars.graphql
-  - directives.graphql
+  - ../ggraphql-plugin/src/main/resources/schema-common.graphql
   - schema.graphql

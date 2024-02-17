@@ -162,6 +162,10 @@ class GraphQLTest {
         override fun batchUser(changeLog: List<ChangeLog>): List<User> {
             return changeLog.map { User(id = "1", email = "test@emai.com", avatarUrl = null) }
         }
+
+        override fun otherUser(changeLog: ChangeLog): User? {
+            return User(id = "1", email = "test@emai.com", avatarUrl = null)
+        }
     }
 
     fun buildSchema(candidates: MutableList<Candidate>, changeLogs: MutableList<ChangeLog>): GraphQL {

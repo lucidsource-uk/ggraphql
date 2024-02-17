@@ -1,40 +1,29 @@
-
-enum FilterOperator {
-    EQ
-    LIKE
-    IN
-    GT,
-    GT_EQ
-    LT
-    LT_EQ
-}
-
-directive @scalarType(type: String) on SCALAR
-directive @ignore on OBJECT
-directive @resolver(name: String!) on FIELD_DEFINITION
-directive @filter(operators: [FilterOperator!]!) on FIELD_DEFINITION
-directive @filtered on FIELD_DEFINITION
-directive @paginated on FIELD_DEFINITION
-
-scalar DateTime @scalarType(type: "java.util.Date")
-scalar PaginationCursor @scalarType(type: "co.uk.somepackage.UnknownType")
+scalar DateTime @type(type: "java.util.Date")
+scalar PaginationCursor @type(type: "co.uk.somepackage.UnknownType")
 
 union Results = TestDto | OtherDto
 
-type BabyNested {
-    id: String
+type User {
+    id: ID
     name: String
 }
 
+type BabyNested {
+    id: ID
+    name: String
+    createdBy: User! @batchLoader @resolver(name: "UserResolver")
+    updatedBy: User @batchLoader @resolver(name: "UserResolver")
+}
+
 type ChildNested {
-    id: String
+    id: ID
     name: String
     babies: [BabyNested] @resolver(name: "NodeResolver")
     babiesReq: [BabyNested!]! @resolver(name: "NodeResolver")
 }
 
 type ParentNested {
-    id: String
+    id: ID
     name: String
     children: [ChildNested] @resolver(name: "NodeResolver")
     paginatedKids: [ChildNested] @paginated
@@ -52,7 +41,7 @@ type Query {
 }
 
 type TestDto implements IdentifiedEntity {
-    id: String
+    id: ID
     name: String! @filter(operators: [EQ])
     age: Int! @filter(operators: [EQ, GT, GT_EQ, LT, LT_EQ])
     results: [Results!]! @paginated
@@ -60,9 +49,9 @@ type TestDto implements IdentifiedEntity {
 }
 
 type OtherDto {
-    id: String
+    id: ID
 }
 
 interface IdentifiedEntity {
-    id: String
+    id: ID
 }

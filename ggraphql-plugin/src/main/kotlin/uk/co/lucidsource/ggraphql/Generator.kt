@@ -31,6 +31,11 @@ object Generator {
         val schemaParser = SchemaParser()
         val typeDefinitionRegistry = TypeDefinitionRegistry()
 
+        val graphqlCommonSchema = this::class.java.classLoader.getResourceAsStream("schema-common.graphql")
+            ?: throw IllegalStateException("Could not load schema-common.graphql")
+
+        typeDefinitionRegistry.merge(schemaParser.parse(graphqlCommonSchema))
+
         schemaFiles
             .forEach {
                 typeDefinitionRegistry.merge(schemaParser.parse(it))
