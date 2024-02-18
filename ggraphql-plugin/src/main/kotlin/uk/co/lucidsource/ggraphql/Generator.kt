@@ -1,6 +1,8 @@
 package uk.co.lucidsource.ggraphql
 
 import graphql.language.EnumTypeDefinition
+import graphql.schema.GraphQLNamedInputType
+import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.SchemaPrinter
 import graphql.schema.idl.TypeDefinitionRegistry
@@ -33,8 +35,9 @@ object Generator {
 
         val graphqlCommonSchema = this::class.java.classLoader.getResourceAsStream("schema-common.graphql")
             ?: throw IllegalStateException("Could not load schema-common.graphql")
+        val commonTypeDefinitionRegistry = schemaParser.parse(graphqlCommonSchema)
 
-        typeDefinitionRegistry.merge(schemaParser.parse(graphqlCommonSchema))
+        typeDefinitionRegistry.merge(commonTypeDefinitionRegistry)
 
         schemaFiles
             .forEach {
@@ -93,10 +96,21 @@ object Generator {
         sdlTypes.forEach { typeDefinitionRegistry.remove(it) }
         typeDefinitionRegistry.addAll(sdlTypes)
 
+        val commonDirectiveNames = commonTypeDefinitionRegistry.directiveDefinitions.keys
+        val commonTypeNames = commonTypeDefinitionRegistry.types().keys
         val schema = UnExecutableSchemaGenerator.makeUnExecutableSchema(typeDefinitionRegistry)
         val schemaPrinter = SchemaPrinter(
             SchemaPrinter.Options.defaultOptions()
-                .includeDirectives(false)
+                .includeDirectives {
+                    !commonDirectiveNames.contains(it)
+                }
+                .includeSchemaElement {
+                    when (it) {
+                        is GraphQLNamedInputType -> !commonTypeNames.contains(it.name)
+                        is GraphQLNamedOutputType -> !commonTypeNames.contains(it.name)
+                        else -> true
+                    }
+                }
         )
 
         schemaOutputFile.writeText(
