@@ -25,8 +25,7 @@ repositories {
 
 configure<GraphqlPluginExtension> {
     packageName = "uk.co.lucidsource.generated"
-    schemas.addAll("schema.graphql")
-    schemaDirectory = layout.projectDirectory
+    schemaDirectory = layout.projectDirectory.dir("graphql")
     schemaOutFile = layout.projectDirectory.file("src/test/resources/schema.graphql")
     kotlinOutputDirectory = layout.buildDirectory.dir("graphql-generated/src/kotlin")
 }
@@ -43,10 +42,6 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-}
-
-tasks.compileKotlin {
-    dependsOn("graphqlGenerate")
 }
 
 tasks.processTestResources {

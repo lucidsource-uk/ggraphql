@@ -140,10 +140,7 @@ class KotlinDataFetcherTypeGenerator(
                 }
 
                 if (!objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
-                    parameters.put(
-                        objectTypeDefinition.name.replaceFirstChar { it.lowercase() },
-                        typeResolver.getModelTypeForName(objectTypeDefinition.name)
-                    )
+                    parameters[objectTypeDefinition.name.replaceFirstChar { it.lowercase() }] = typeResolver.getModelTypeForName(objectTypeDefinition.name)
                 }
 
                 field.inputValueDefinitions.forEach {
