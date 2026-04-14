@@ -14,14 +14,21 @@ subprojects {
             withSourcesJar()
         }
 
-        configure<PublishingExtension> {
-            publications {
-                create<MavenPublication>("maven") {
-                    groupId = project.group as String
-                    artifactId = project.name
-                    version = project.version as String
+        afterEvaluate {
+            configure<PublishingExtension> {
+                publications {
+                    // java-gradle-plugin already creates publications including the marker artifact
+                    if (project.plugins.hasPlugin("java-gradle-plugin")) {
+                        return@publications
+                    }
 
-                    from(components["java"])
+                    create<MavenPublication>("maven") {
+                        groupId = project.group as String
+                        artifactId = project.name
+                        version = project.version as String
+
+                        from(components["java"])
+                    }
                 }
             }
         }

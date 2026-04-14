@@ -2,6 +2,7 @@ package uk.co.lucidsource.ggraphql.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 
 class GraphqlPlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -9,6 +10,12 @@ class GraphqlPlugin : Plugin<Project> {
             .create("graphqlGenerate", GraphqlPluginExtension::class.java)
 
         val defaultOutputDir = project.layout.buildDirectory.dir("generated/source/graphql/main")
+
+        project.pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+            project.extensions.getByType(KotlinProjectExtension::class.java).sourceSets.getByName("main") {
+                it.kotlin.srcDir(extension.kotlinOutputDirectory.orElse(defaultOutputDir))
+            }
+        }
 
         val cleanTask = project.tasks.register(
             "graphqlCleanGenerated",

@@ -50,10 +50,4 @@ tasks.processTestResources {
 
 kotlin {
     jvmToolchain(21)
-
-    sourceSets {
-        main {
-            kotlin.srcDir("${layout.buildDirectory.get()}/graphql-generated/src/kotlin")
-        }
-    }
 }

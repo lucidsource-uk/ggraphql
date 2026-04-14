@@ -10,7 +10,7 @@ repositories {
 gradlePlugin {
     plugins {
         create("graphqlGenerate") {
-            id = "ggraphql-plugin"
+            id = "uk.co.lucidsource.ggraphql"
             implementationClass = "uk.co.lucidsource.ggraphql.plugin.GraphqlPlugin"
         }
     }
@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":ggraphql-api"))
     implementation("com.graphql-java:graphql-java:${findProperty("graphql_java_version")}")
     implementation("com.squareup:kotlinpoet:1.16.0")
+    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.21")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.mockito:mockito-inline:5.2.0")
