@@ -179,10 +179,9 @@ class KotlinDataFetcherTypeGenerator(
                             "return CompletableFuture.supplyAsync({ service.%L(%L) }, executor)",
                             field.name,
                             field.inputValueDefinitions.joinToString(", ") {
-                                it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
-                                        it.type
-                                    )
-                                ) "" else "!!")
+                                val needsAssert = !GraphQLTypeUtil.isNullType(it.type) &&
+                                    typeResolver.isComplexTypeName(GraphQLTypeUtil.getTypeName(it.type))
+                                it.name + " = " + it.name + (if (needsAssert) "!!" else "")
                             }
                         )
                     )
@@ -195,10 +194,9 @@ class KotlinDataFetcherTypeGenerator(
                             typeResolver.getKotlinTypeForModel(TypeName(objectTypeDefinition.name))
                                 .copy(nullable = false),
                             field.inputValueDefinitions.joinToString(", ") {
-                                it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
-                                        it.type
-                                    )
-                                ) "" else "!!")
+                                val needsAssert = !GraphQLTypeUtil.isNullType(it.type) &&
+                                    typeResolver.isComplexTypeName(GraphQLTypeUtil.getTypeName(it.type))
+                                it.name + " = " + it.name + (if (needsAssert) "!!" else "")
                             }
                         )
                     )
