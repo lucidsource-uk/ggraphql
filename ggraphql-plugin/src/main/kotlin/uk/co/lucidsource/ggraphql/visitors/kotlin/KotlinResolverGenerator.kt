@@ -17,6 +17,7 @@ import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderRegistry
 import uk.co.lucidsource.ggraphql.api.serde.Deserializer
 import uk.co.lucidsource.ggraphql.plugin.AnnotationAspect
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isResolverOnlyType
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitor
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
 import java.util.concurrent.Executor
@@ -152,7 +153,8 @@ class KotlinResolverGenerator(
 
     private fun buildResolver(
         resolverName: String,
-        dataFetchers: List<SDLNodeVisitorContext.DataFetcherContext>
+        dataFetchers: List<SDLNodeVisitorContext.DataFetcherContext>,
+        context: SDLNodeVisitorContext
     ): TypeSpec {
         return TypeSpec
             .interfaceBuilder(resolverName)
@@ -160,26 +162,59 @@ class KotlinResolverGenerator(
                 dataFetchers.map { dataFetcher ->
                     val methodBuilder = FunSpec.builder(if (dataFetcher.isBulk) "batch" + dataFetcher.fieldName.replaceFirstChar { it.uppercase() } else dataFetcher.fieldName)
                         .addModifiers(KModifier.ABSTRACT)
-                        .addParameters(
-                            dataFetcher.parameters.map {
-                                ParameterSpec.builder(
-                                    it.key,
-                                    if (dataFetcher.isBulk) List::class.asTypeName()
-                                        .parameterizedBy(it.value) else it.value
-                                ).build()
-                            }
-                        )
-                        .returns(
-                            if (dataFetcher.isBulk) List::class.asTypeName()
-                                .parameterizedBy(dataFetcher.returnType.copy(nullable = false)) else dataFetcher.returnType
-                        )
-                    
-                    // Apply annotations from annotation aspects
-                    dataFetcher.annotationAspects.forEach { aspect ->
-                        methodBuilder.addAnnotation(createAnnotationSpec(aspect))
+                        
+                    // For resolver-only parent types, don't include the parent as a parameter
+                    val filteredParameters = if (dataFetcher.isParentResolverOnly) {
+                        dataFetcher.parameters.filterKeys { key -> 
+                            key != dataFetcher.objectTypeName.replaceFirstChar { it.lowercase() }
+                        }
+                    } else {
+                        dataFetcher.parameters
                     }
                     
-                    methodBuilder.build()
+                    methodBuilder.addParameters(
+                        filteredParameters.map {
+                            ParameterSpec.builder(
+                                it.key,
+                                if (dataFetcher.isBulk) List::class.asTypeName()
+                                    .parameterizedBy(it.value) else it.value
+                            ).build()
+                        }
+                    )
+                    
+                    // For methods that return resolver-only types, add default implementation
+                    val returnType = if (dataFetcher.isBulk) List::class.asTypeName()
+                        .parameterizedBy(dataFetcher.returnType.copy(nullable = false)) else dataFetcher.returnType
+                    
+                    methodBuilder.returns(returnType)
+                    
+                    // Check if this method returns a resolver-only type
+                    val returnTypeName = dataFetcher.returnType.toString().removeSuffix("?")
+                    val simpleReturnTypeName = returnTypeName.substringAfterLast(".")
+                    val returnsResolverOnlyType = context.resolverOnlyTypes.contains(simpleReturnTypeName)
+
+                    if (returnsResolverOnlyType && !dataFetcher.isBulk) {
+                        // Add default implementation for methods that return resolver-only types
+                        // Create a new method builder without ABSTRACT modifier
+                        val methodWithDefault = FunSpec.builder(methodBuilder.build().name)
+                            .addParameters(methodBuilder.build().parameters)
+                            .returns(methodBuilder.build().returnType!!)
+                            .addCode(CodeBlock.of("return %T()", dataFetcher.returnType.copy(nullable = false)))
+                        
+                        // Apply annotations from annotation aspects
+                        dataFetcher.annotationAspects.forEach { aspect ->
+                            methodWithDefault.addAnnotation(createAnnotationSpec(aspect))
+                        }
+                        
+                        methodWithDefault.build()
+                    } else {
+                        // Apply annotations from annotation aspects
+                        dataFetcher.annotationAspects.forEach { aspect ->
+                            methodBuilder.addAnnotation(createAnnotationSpec(aspect))
+                        }
+                        
+                        methodBuilder.build()
+                    }
                 }
             ).build()
     }
@@ -205,7 +240,7 @@ class KotlinResolverGenerator(
 
     override fun finalize(context: SDLNodeVisitorContext) {
         val generatedTypes = context.dataFetchers.groupBy { it.resolverName }.map { dataFetcher ->
-            buildResolver(dataFetcher.key, dataFetcher.value)
+            buildResolver(dataFetcher.key, dataFetcher.value, context)
         }.map { FileSpec.get(typeResolver.getResolverPackageName(), it) }
 
         context.typeSpecs += sharedTypes.values.map {

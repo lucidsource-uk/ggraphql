@@ -23,6 +23,7 @@ import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getResolverAspectResol
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getReturnsGenerateTypeParameterOf
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isBatchDataLoaderResolverAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isExcludedFromCodeGenerationAspectApplied
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isResolverOnlyType
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isPaginatedAspectApplied
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultBatchDataFetcherName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeNameResolver.defaultBatchLoaderName
@@ -116,6 +117,10 @@ class KotlinDataFetcherTypeGenerator(
                         )
                     else typeResolver.getKotlinTypeForModel(field.type)
 
+                // Check if the return type is a resolver-only type
+                val returnTypeName = GraphQLTypeUtil.getTypeName(field.type)
+                val returnsResolverOnlyType = context.resolverOnlyTypes.contains(returnTypeName)
+
                 val dataFetcherGet = FunSpec.builder("get")
                     .addModifiers(KModifier.OVERRIDE)
                     .returns(CompletableFuture::class.asClassName().parameterizedBy(returnType))
@@ -174,7 +179,29 @@ class KotlinDataFetcherTypeGenerator(
                                 .copy(nullable = false)
                         )
                     )
+                } else if (returnsResolverOnlyType) {
+                    // For methods that return resolver-only types, directly instantiate the type
+                    dataFetcherGet.addCode(
+                        CodeBlock.of(
+                            "return CompletableFuture.completedFuture(%T())",
+                            returnType.copy(nullable = false)
+                        )
+                    )
                 } else if (objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
+                    dataFetcherGet.addCode(
+                        CodeBlock.of(
+                            "return CompletableFuture.supplyAsync({ service.%L(%L) }, executor)",
+                            field.name,
+                            field.inputValueDefinitions.joinToString(", ") {
+                                it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
+                                        it.type
+                                    )
+                                ) "" else "!!")
+                            }
+                        )
+                    )
+                } else if (objectTypeDefinition.isResolverOnlyType()) {
+                    // For resolver-only parent types, don't pass the parent instance
                     dataFetcherGet.addCode(
                         CodeBlock.of(
                             "return CompletableFuture.supplyAsync({ service.%L(%L) }, executor)",
@@ -254,7 +281,8 @@ class KotlinDataFetcherTypeGenerator(
                     parameters = parameters,
                     returnType = returnType,
                     isBulk = field.isBatchDataLoaderResolverAspectApplied(),
-                    annotationAspects = field.getAnnotationAspects()
+                    annotationAspects = field.getAnnotationAspects(),
+                    isParentResolverOnly = objectTypeDefinition.isResolverOnlyType()
                 )
             }
     }

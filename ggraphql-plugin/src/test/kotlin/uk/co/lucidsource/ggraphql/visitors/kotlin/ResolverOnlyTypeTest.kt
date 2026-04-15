@@ -7,6 +7,7 @@ import graphql.language.ObjectTypeDefinition
 import graphql.language.TypeName
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.applyGeneratesResolverAspect
@@ -88,5 +89,54 @@ class ResolverOnlyTypeTest {
         
         // Verify that it has properties
         assertTrue(typeSpec.propertySpecs.isNotEmpty(), "Should have properties")
+    }
+
+    @Test
+    fun `should generate resolver interface with default implementation for resolver-only return types`() {
+        val typeResolver = KotlinTypeResolver("test")
+        val resolverGenerator = KotlinResolverGenerator(typeResolver)
+        val context = SDLNodeVisitorContext()
+        
+        // Add a resolver-only type to the context
+        context.resolverOnlyTypes.add("ResolverOnlyType")
+        
+        // Create a data fetcher context that returns a resolver-only type
+        val dataFetcher = SDLNodeVisitorContext.DataFetcherContext(
+            objectTypeName = "Mutation",
+            fieldName = "getResolverOnlyType",
+            dataFetcherName = "MutationGetResolverOnlyTypeDataFetcher",
+            resolverName = "TestResolver",
+            parameters = emptyMap(),
+            returnType = typeResolver.getModelTypeForName("ResolverOnlyType"),
+            isBulk = false,
+            annotationAspects = emptyList(),
+            isParentResolverOnly = false
+        )
+        
+        context.dataFetchers.add(dataFetcher)
+        
+        // Generate the resolver
+        resolverGenerator.finalize(context)
+        
+        // Verify that a resolver interface was generated
+        assertTrue(context.typeSpecs.isNotEmpty(), "Should generate resolver interface")
+        
+        val resolverFileSpec = context.typeSpecs.find { 
+            it.members.any { member -> 
+                member is TypeSpec && member.name == "TestResolver" 
+            }
+        }
+        
+        assertNotNull(resolverFileSpec, "Should generate TestResolver interface")
+        
+        val resolverTypeSpec = resolverFileSpec!!.members.first { it is TypeSpec } as TypeSpec
+        
+        // Find the method that returns the resolver-only type
+        val methodWithDefault = resolverTypeSpec.funSpecs.find { it.name == "getResolverOnlyType" }
+        assertNotNull(methodWithDefault, "Should have getResolverOnlyType method")
+        
+        // Verify that it has a default implementation (not abstract)
+        assertFalse(methodWithDefault!!.modifiers.contains(KModifier.ABSTRACT), "Should not be abstract")
+        assertTrue(methodWithDefault.body.isNotEmpty(), "Should have default implementation")
     }
 }

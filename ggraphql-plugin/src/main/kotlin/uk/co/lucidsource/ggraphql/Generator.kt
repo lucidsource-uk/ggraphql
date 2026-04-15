@@ -25,6 +25,7 @@ import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinResolverGenerator
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinTypeGenerator
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinTypeResolver
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinTypeResolverGenerator
+import uk.co.lucidsource.ggraphql.visitors.kotlin.ResolverOnlyTypeDetector
 import uk.co.lucidsource.ggraphql.plugin.AnnotationMapper
 import uk.co.lucidsource.ggraphql.plugin.AnnotationMapping
 import uk.co.lucidsource.ggraphql.plugin.ConfigurationValidator
@@ -102,6 +103,12 @@ object Generator {
             .filter { !sdlExcludedTypes.contains(it) }
 
         val visitorContext = SDLNodeVisitorContext()
+        
+        // First pass: Detect resolver-only types
+        SDLIterator(ResolverOnlyTypeDetector())
+            .iterate(sdlTypes, visitorContext)
+        
+        // Second pass: Generate code with knowledge of resolver-only types
         SDLIterator(
             SDLNodeVisitorChain(
                 KotlinInterfaceTypeGenerator(typeResolver),

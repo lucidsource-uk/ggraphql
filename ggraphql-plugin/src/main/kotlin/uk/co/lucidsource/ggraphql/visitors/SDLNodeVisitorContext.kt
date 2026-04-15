@@ -14,7 +14,10 @@ data class SDLNodeVisitorContext(
     // Implementation type name -> Union type name
     val typesImplementingUnions: MutableMap<String, String> = mutableMapOf(),
 
-    val dataFetchers: MutableSet<DataFetcherContext> = mutableSetOf()
+    val dataFetchers: MutableSet<DataFetcherContext> = mutableSetOf(),
+    
+    // Track resolver-only type names
+    val resolverOnlyTypes: MutableSet<String> = mutableSetOf()
 ) {
     data class InterfaceContext(
         val name: String,
@@ -30,6 +33,7 @@ data class SDLNodeVisitorContext(
         val parameters: Map<String, TypeName>,
         val returnType: TypeName,
         val isBulk: Boolean = false,
-        val annotationAspects: List<AnnotationAspect> = emptyList()
+        val annotationAspects: List<AnnotationAspect> = emptyList(),
+        val isParentResolverOnly: Boolean = false
     )
 }

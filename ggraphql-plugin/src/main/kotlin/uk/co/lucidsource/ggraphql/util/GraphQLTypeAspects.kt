@@ -115,6 +115,15 @@ object GraphQLTypeAspects {
         return this.additionalData[RETURNS_TYPE_PARAMETER_OF_TYPE]
     }
 
+    /**
+     * Checks if an ObjectTypeDefinition is a resolver-only type.
+     * A resolver-only type has fields but all of them have @resolver directives.
+     */
+    fun ObjectTypeDefinition.isResolverOnlyType(): Boolean {
+        return fieldDefinitions.isNotEmpty() && 
+               fieldDefinitions.all { it.getResolverAspectResolverName() != null }
+    }
+
     // Annotation aspect support
 
     /**

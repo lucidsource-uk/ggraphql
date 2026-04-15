@@ -176,11 +176,9 @@ class GraphQLTest {
     class MockTeamMutationResolver(
         val candidates: MutableList<Candidate>
     ) : TeamMutationResolver {
-        override fun candidates(): CandidateMutation {
-            return CandidateMutation()
-        }
-
-        override fun acceptInvitation(invitationId: String, candidateMutation: CandidateMutation): Candidate {
+        // candidates() method has default implementation, no override needed
+        
+        override fun acceptInvitation(invitationId: String): Candidate {
             // Mock implementation - return the first candidate or create a new one
             return candidates.firstOrNull() ?: Candidate(
                 id = "accepted-$invitationId",
