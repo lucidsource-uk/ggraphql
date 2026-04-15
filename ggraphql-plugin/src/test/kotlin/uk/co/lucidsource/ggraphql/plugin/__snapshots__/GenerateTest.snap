@@ -272,7 +272,7 @@ public class MutationDeleteProductDataFetcher(
   public val executor: Executor,
 ) : DataFetcher<CompletableFuture<Boolean?>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Boolean?> {
-    val id = env.getArgument("id") as String 
+    val id = env.getArgument("id") as String? 
     return CompletableFuture.supplyAsync({ service.deleteProduct(id = id!!) }, executor)
   }
 }
@@ -299,7 +299,7 @@ public class MutationUpdateProductDataFetcher(
   public val executor: Executor,
 ) : DataFetcher<CompletableFuture<Product?>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Product?> {
-    val id = env.getArgument("id") as String 
+    val id = env.getArgument("id") as String? 
     val input = env.getArgument<Any>("input")?.let { deserializer.deserialize(it,
         UpdateProductInput::class.java) } 
     return CompletableFuture.supplyAsync({ service.updateProduct(id = id!!, input = input!!) },
@@ -404,7 +404,7 @@ public class QueryProductByIdDataFetcher(
   public val executor: Executor,
 ) : DataFetcher<CompletableFuture<Product?>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Product?> {
-    val id = env.getArgument("id") as String 
+    val id = env.getArgument("id") as String? 
     return CompletableFuture.supplyAsync({ service.productById(id = id!!) }, executor)
   }
 }

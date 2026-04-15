@@ -165,7 +165,7 @@ class KotlinDataFetcherTypeGenerator(
                                 "val %L = env.getArgument(%S) as %T \n",
                                 it.name,
                                 it.name,
-                                typeResolver.getKotlinTypeForModel(it.type)
+                                typeResolver.getKotlinTypeForModel(it.type).copy(nullable = true)
                             )
                         )
                     }
