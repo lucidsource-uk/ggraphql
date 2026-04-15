@@ -48,6 +48,10 @@ type Candidate implements IdentifiedEntity {
   tags: [String!]
 }
 
+type CandidateMutation {
+  acceptInvitation(invitationId: ID!): Candidate!
+}
+
 type CandidatePaginatedResult {
   nextCursor: PaginationCursor
   nodes: [Candidate!]!
@@ -93,6 +97,7 @@ type ChangeLogPaginatedResult {
 
 "Mutation root"
 type Mutation {
+  candidates: CandidateMutation!
   deleteCandidate(candidateId: String!): SuccessResponse!
   persistCandidate(candidate: CandidateInput!): Candidate!
 }

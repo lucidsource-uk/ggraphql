@@ -70,14 +70,20 @@ class KotlinTypeGenerator(
             }
 
         val kotlinTypeBuilder = TypeSpec.classBuilder(objectTypeDefinition.name)
-            .addModifiers(KModifier.DATA)
             .addSuperinterfaces(implements)
-            .primaryConstructor(
-                FunSpec.constructorBuilder()
-                    .addParameters(parameters)
-                    .build()
-            )
-            .addProperties(properties)
+
+        // Only add DATA modifier and constructor if there are parameters
+        // This handles types that would otherwise generate empty data classes (compilation error in Kotlin)
+        if (parameters.isNotEmpty()) {
+            kotlinTypeBuilder
+                .addModifiers(KModifier.DATA)
+                .primaryConstructor(
+                    FunSpec.constructorBuilder()
+                        .addParameters(parameters)
+                        .build()
+                )
+                .addProperties(properties)
+        }
 
         // Apply annotations from annotation aspects
         applyAnnotations(kotlinTypeBuilder, objectTypeDefinition)

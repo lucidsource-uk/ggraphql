@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import graphql.language.InterfaceTypeDefinition
 import graphql.language.ObjectTypeDefinition
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import uk.co.lucidsource.ggraphql.plugin.AnnotationAspect
@@ -47,7 +48,9 @@ class AnnotationIntegrationTest {
         
         // Verify the generated code structure
         assertEquals("Product", typeSpec.name)
-        assertTrue(typeSpec.modifiers.contains(com.squareup.kotlinpoet.KModifier.DATA))
+        // Types with no properties are generated as regular classes, not data classes
+        // This is because Kotlin doesn't allow empty data classes
+        assertFalse(typeSpec.modifiers.contains(com.squareup.kotlinpoet.KModifier.DATA))
         
         // Generate the actual Kotlin code to verify it compiles
         val generatedCode = fileSpec.toString()
