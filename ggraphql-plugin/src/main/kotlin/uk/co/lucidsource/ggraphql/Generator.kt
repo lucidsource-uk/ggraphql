@@ -10,6 +10,7 @@ import graphql.schema.idl.UnExecutableSchemaGenerator
 import uk.co.lucidsource.ggraphql.transformers.SDLMapper
 import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformerChain
 import uk.co.lucidsource.ggraphql.transformers.SDLNodeTransformerContext
+import uk.co.lucidsource.ggraphql.transformers.schema.AnnotationDirectiveTransformer
 import uk.co.lucidsource.ggraphql.transformers.schema.FilterDirectiveTransformer
 import uk.co.lucidsource.ggraphql.transformers.schema.FilteredDirectiveTransformer
 import uk.co.lucidsource.ggraphql.transformers.schema.PaginatedDirectiveTransformer
@@ -24,12 +25,21 @@ import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinResolverGenerator
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinTypeGenerator
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinTypeResolver
 import uk.co.lucidsource.ggraphql.visitors.kotlin.KotlinTypeResolverGenerator
+import uk.co.lucidsource.ggraphql.plugin.AnnotationMapper
+import uk.co.lucidsource.ggraphql.plugin.AnnotationMapping
+import uk.co.lucidsource.ggraphql.plugin.ConfigurationValidator
 import java.io.File
 import kotlin.io.path.Path
 import kotlin.jvm.optionals.getOrNull
 
 object Generator {
-    fun generate(schemaFiles: List<File>, packageName: String, kotlinOutputDirectory: File, schemaOutputFile: File) {
+    fun generate(
+        schemaFiles: List<File>, 
+        packageName: String, 
+        kotlinOutputDirectory: File, 
+        schemaOutputFile: File,
+        directiveMappings: Map<String, AnnotationMapping> = emptyMap()
+    ) {
         val schemaParser = SchemaParser()
         val typeDefinitionRegistry = TypeDefinitionRegistry()
 
@@ -44,6 +54,12 @@ object Generator {
                 typeDefinitionRegistry.merge(schemaParser.parse(it))
             }
 
+        // Validate directive mappings configuration
+        if (directiveMappings.isNotEmpty()) {
+            val validator = ConfigurationValidator()
+            validator.validateDirectiveMappings(directiveMappings, typeDefinitionRegistry)
+        }
+
         val schemaDefinition = typeDefinitionRegistry.schemaDefinition().getOrNull()
         val queryRootName =
             schemaDefinition?.operationTypeDefinitions?.firstOrNull { it.name == "query" }?.typeName?.name ?: "Query"
@@ -56,12 +72,22 @@ object Generator {
             queryRootName = queryRootName,
             mutationRootName = mutationRootName,
         )
-        val typeTransformerChain = SDLNodeTransformerChain(
+        
+        // Create annotation transformer if directive mappings are configured
+        val transformers = mutableListOf(
             ResolvedDirectiveTransformer(),
             FilterDirectiveTransformer(),
             FilteredDirectiveTransformer(),
             PaginatedDirectiveTransformer()
         )
+        
+        if (directiveMappings.isNotEmpty()) {
+            val schemaDirectives = typeDefinitionRegistry.directiveDefinitions.keys
+            val annotationMapper = AnnotationMapper(directiveMappings, schemaDirectives)
+            transformers.add(AnnotationDirectiveTransformer(annotationMapper))
+        }
+        
+        val typeTransformerChain = SDLNodeTransformerChain(*transformers.toTypedArray())
 
         val sdlExcludedTypes = typeDefinitionRegistry.types().values
             .filter {

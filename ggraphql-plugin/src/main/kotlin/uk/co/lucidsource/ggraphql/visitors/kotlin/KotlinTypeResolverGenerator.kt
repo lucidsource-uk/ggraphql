@@ -1,6 +1,7 @@
 package uk.co.lucidsource.ggraphql.visitors.kotlin
 
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.DelicateKotlinPoetApi
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -25,6 +26,7 @@ class KotlinTypeResolverGenerator(
         return typeName + "TypeResolver"
     }
 
+    @OptIn(DelicateKotlinPoetApi::class)
     private fun generateInterfaceTypeResolver(
         typeName: String,
         implementedByTypeNames: Set<String>

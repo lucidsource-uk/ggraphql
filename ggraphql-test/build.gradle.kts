@@ -1,3 +1,4 @@
+import uk.co.lucidsource.ggraphql.plugin.AnnotationMapping
 import uk.co.lucidsource.ggraphql.plugin.GraphqlPluginExtension
 
 plugins {
@@ -17,7 +18,7 @@ buildscript {
     }
 }
 
-apply(plugin = "ggraphql-plugin")
+apply(plugin = "uk.co.lucidsource.ggraphql")
 
 repositories {
     mavenCentral()
@@ -28,6 +29,12 @@ configure<GraphqlPluginExtension> {
     schemaDirectory = layout.projectDirectory.dir("graphql")
     schemaOutFile = layout.projectDirectory.file("src/test/resources/schema.graphql")
     kotlinOutputDirectory = layout.buildDirectory.dir("graphql-generated/src/kotlin")
+    directiveMappings = mapOf(
+        "entity" to AnnotationMapping(
+            className = "uk.co.lucidsource.Entity",
+            argumentMapping =  { args -> listOf() }
+        )
+    )
 }
 
 dependencies {

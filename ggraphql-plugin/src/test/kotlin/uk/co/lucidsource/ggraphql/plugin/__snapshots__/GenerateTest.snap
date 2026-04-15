@@ -1,3 +1,868 @@
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-/test/dataloader-schema/datafetchers/QueryUsersDataFetcher.kt]=[
+package test.`dataloader-schema`.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import test.`dataloader-schema`.models.User
+import test.`dataloader-schema`.resolvers.QueryResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class QueryUsersDataFetcher(
+  public val service: QueryResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<User>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User> =
+      CompletableFuture.supplyAsync({ service.users() }, executor)
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-/test/dataloader-schema/datafetchers/UserManagerBatchDataLoader.kt]=[
+package test.`dataloader-schema`.datafetchers
+
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
+import java.util.concurrent.Executor
+import kotlin.collections.List
+import org.dataloader.BatchLoader
+import test.`dataloader-schema`.models.User
+import test.`dataloader-schema`.resolvers.UserResolver
+
+public class UserManagerBatchDataLoader(
+  public val service: UserResolver,
+  public val executor: Executor,
+) : BatchLoader<User, User> {
+  override fun load(keys: List<User>): CompletionStage<List<User>> {
+
+                    return CompletableFuture.supplyAsync({ service.batchManager(keys) }, executor)
+                
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-/test/dataloader-schema/datafetchers/UserManagerDataFetcher.kt]=[
+package test.`dataloader-schema`.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import test.`dataloader-schema`.models.User
+import test.`dataloader-schema`.resolvers.UserResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class UserManagerDataFetcher(
+  public val service: UserResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<User>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User> {
+    val dataLoader = env.getDataLoader<User, User>("UserManagerBatchDataLoader") 
+    return dataLoader!!.load(env.getSource<User>()) 
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-/test/dataloader-schema/models/User.kt]=[
+package test.`dataloader-schema`.models
+
+import kotlin.Int
+
+public data class User(
+  public val id: Int?,
+)
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-/test/dataloader-schema/resolvers/GraphQLCodeRegistryConfiguration.kt]=[
+package test.`dataloader-schema`.resolvers
+
+import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLCodeRegistry
+import java.util.concurrent.Executor
+import test.`dataloader-schema`.datafetchers.QueryUsersDataFetcher
+import test.`dataloader-schema`.datafetchers.UserManagerDataFetcher
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class GraphQLCodeRegistryConfiguration(
+  public val userResolver: UserResolver,
+  public val queryResolver: QueryResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) {
+  public fun applyConfiguration(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
+      GraphQLCodeRegistry.Builder {
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("User", "manager"),
+        UserManagerDataFetcher(userResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "users"),
+        QueryUsersDataFetcher(queryResolver, deserializer, executor))
+    return graphQLCodeRegistry
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-/test/dataloader-schema/resolvers/QueryResolver.kt]=[
+package test.`dataloader-schema`.resolvers
+
+import test.`dataloader-schema`.models.User
+
+public interface QueryResolver {
+  public fun users(): User
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-/test/dataloader-schema/resolvers/UserResolver.kt]=[
+package test.`dataloader-schema`.resolvers
+
+import kotlin.collections.List
+import test.`dataloader-schema`.models.User
+
+public interface UserResolver {
+  public fun batchManager(user: List<User>): List<User>
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-/test/dataloader-schema/wiring/DataLoaderRegistryConfiguration.kt]=[
+package test.`dataloader-schema`.wiring
+
+import java.util.concurrent.Executor
+import org.dataloader.DataLoaderFactory
+import org.dataloader.DataLoaderRegistry
+import test.`dataloader-schema`.datafetchers.UserManagerBatchDataLoader
+import test.`dataloader-schema`.resolvers.UserResolver
+
+public class DataLoaderRegistryConfiguration(
+  public val userResolver: UserResolver,
+  public val executor: Executor,
+) {
+  public fun applyConfiguration(registry: DataLoaderRegistry.Builder): DataLoaderRegistry.Builder {
+    registry.register("UserManagerBatchDataLoader",
+        DataLoaderFactory.newDataLoader(UserManagerBatchDataLoader(userResolver, executor)))
+    return registry
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-/test/dataloader-schema/wiring/TypeResolverWiring.kt]=[
+package test.`dataloader-schema`.wiring
+
+import graphql.schema.idl.RuntimeWiring
+
+public object TypeResolverWiring {
+  public fun wireTypeResolvers(wiring: RuntimeWiring.Builder): RuntimeWiring.Builder = wiring
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema-generated-files]=[
+/test/dataloader-schema/datafetchers/UserManagerBatchDataLoader.kt,/test/dataloader-schema/datafetchers/UserManagerDataFetcher.kt,/test/dataloader-schema/datafetchers/QueryUsersDataFetcher.kt,/test/dataloader-schema/wiring/DataLoaderRegistryConfiguration.kt,/test/dataloader-schema/wiring/TypeResolverWiring.kt,/test/dataloader-schema/resolvers/UserResolver.kt,/test/dataloader-schema/resolvers/QueryResolver.kt,/test/dataloader-schema/resolvers/GraphQLCodeRegistryConfiguration.kt,/test/dataloader-schema/models/User.kt
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithBatchLoader[dataloader-schema.graphql]=[
+"This directive allows results to be deferred during execution"
+directive @defer(
+    "Deferred behaviour is controlled by this argument"
+    if: Boolean! = true,
+    "A unique label that represents the fragment being deferred"
+    label: String
+  ) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Marks the field, argument, input field or enum value as deprecated"
+directive @deprecated(
+    "The reason for the deprecation"
+    reason: String! = "No longer supported"
+  ) on FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM_VALUE | INPUT_FIELD_DEFINITION
+
+"This directive disables error propagation when a non nullable field returns null for the given operation."
+directive @experimental_disableErrorPropagation on QUERY | MUTATION | SUBSCRIPTION
+
+"Directs the executor to include this field or fragment only when the `if` argument is true"
+directive @include(
+    "Included when true."
+    if: Boolean!
+  ) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Indicates an Input Object is a OneOf Input Object."
+directive @oneOf on INPUT_OBJECT
+
+"Directs the executor to skip this field or fragment when the `if` argument is true."
+directive @skip(
+    "Skipped when true."
+    if: Boolean!
+  ) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Exposes a URL that specifies the behaviour of this scalar."
+directive @specifiedBy(
+    "The URL that specifies the behaviour of this scalar."
+    url: String!
+  ) on SCALAR
+
+type Query {
+  users: User!
+}
+
+type User {
+  id: Int
+  manager: User!
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/datafetchers/CategoryProductsDataFetcher.kt]=[
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.collections.List
+import test.annotations.models.Category
+import test.annotations.models.Product
+import test.annotations.resolvers.CategoryProductResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class CategoryProductsDataFetcher(
+  public val service: CategoryProductResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<List<Product>>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<Product>> =
+      CompletableFuture.supplyAsync({ service.products(category = env.getSource<Category>(), ) },
+      executor)
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/datafetchers/MutationDeleteProductDataFetcher.kt]=[
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.Boolean
+import kotlin.String
+import test.annotations.resolvers.ProductMutationResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class MutationDeleteProductDataFetcher(
+  public val service: ProductMutationResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<Boolean?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Boolean?> {
+    val id = env.getArgument("id") as String 
+    return CompletableFuture.supplyAsync({ service.deleteProduct(id = id) }, executor)
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/datafetchers/MutationUpdateProductDataFetcher.kt]=[
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.String
+import test.annotations.models.Product
+import test.annotations.models.UpdateProductInput
+import test.annotations.resolvers.ProductMutationResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class MutationUpdateProductDataFetcher(
+  public val service: ProductMutationResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<Product?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Product?> {
+    val id = env.getArgument("id") as String 
+    val input = env.getArgument<Any>("input")?.let { deserializer.deserialize(it,
+        UpdateProductInput::class.java) } 
+    return CompletableFuture.supplyAsync({ service.updateProduct(id = id, input = input!!) },
+        executor)
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/datafetchers/ProductProfileDataFetcher.kt]=[
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import test.annotations.models.Product
+import test.annotations.models.ProductProfile
+import test.annotations.resolvers.ProductProfileResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class ProductProfileDataFetcher(
+  public val service: ProductProfileResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<ProductProfile?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<ProductProfile?> =
+      CompletableFuture.supplyAsync({ service.profile(product = env.getSource<Product>(), ) },
+      executor)
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/datafetchers/QueryCategoriesDataFetcher.kt]=[
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.collections.List
+import test.annotations.models.Category
+import test.annotations.resolvers.CategoryResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class QueryCategoriesDataFetcher(
+  public val service: CategoryResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<List<Category>>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<Category>> =
+      CompletableFuture.supplyAsync({ service.categories() }, executor)
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/datafetchers/QueryCreateProductDataFetcher.kt]=[
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import test.annotations.models.CreateProductInput
+import test.annotations.models.Product
+import test.annotations.resolvers.ProductMutationResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class QueryCreateProductDataFetcher(
+  public val service: ProductMutationResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<Product?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Product?> {
+    val input = env.getArgument<Any>("input")?.let { deserializer.deserialize(it,
+        CreateProductInput::class.java) } 
+    return CompletableFuture.supplyAsync({ service.createProduct(input = input!!) }, executor)
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/datafetchers/QueryProductByIdDataFetcher.kt]=[
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.String
+import test.annotations.models.Product
+import test.annotations.resolvers.ProductResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class QueryProductByIdDataFetcher(
+  public val service: ProductResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<Product?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Product?> {
+    val id = env.getArgument("id") as String 
+    return CompletableFuture.supplyAsync({ service.productById(id = id) }, executor)
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/datafetchers/QueryProductsDataFetcher.kt]=[
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.collections.List
+import test.annotations.models.Product
+import test.annotations.resolvers.QueryResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class QueryProductsDataFetcher(
+  public val service: QueryResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<List<Product>>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<Product>> =
+      CompletableFuture.supplyAsync({ service.products() }, executor)
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/models/BaseEntity.kt]=[
+package test.annotations.models
+
+import java.util.Date
+import kotlin.String
+
+public interface BaseEntity {
+  public val id: String
+
+  public val createdAt: Date?
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/models/Category.kt]=[
+package test.annotations.models
+
+import com.example.Table
+import kotlin.String
+
+@Table("categories")
+public data class Category(
+  public val id: String,
+  public val name: String,
+  public val description: String?,
+)
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/models/CreateProductInput.kt]=[
+package test.annotations.models
+
+import kotlin.Float
+import kotlin.String
+
+public data class CreateProductInput(
+  public val name: String,
+  public val price: Float,
+  public val categoryId: String,
+)
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/models/Product.kt]=[
+package test.annotations.models
+
+import com.example.Entity
+import com.example.Table
+import java.util.Date
+import kotlin.Float
+import kotlin.String
+
+@Entity
+@Table("products")
+public data class Product(
+  override val id: String,
+  public val name: String,
+  public val price: Float,
+  override val createdAt: Date?,
+) : BaseEntity
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/models/ProductProfile.kt]=[
+package test.annotations.models
+
+import kotlin.String
+import kotlin.collections.List
+
+public data class ProductProfile(
+  public val id: String,
+  public val description: String?,
+  public val tags: List<String>,
+)
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/models/UpdateProductInput.kt]=[
+package test.annotations.models
+
+import kotlin.Float
+import kotlin.String
+
+public data class UpdateProductInput(
+  public val name: String? = null,
+  public val price: Float? = null,
+)
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/resolvers/CategoryProductResolver.kt]=[
+package test.annotations.resolvers
+
+import kotlin.collections.List
+import org.springframework.transaction.`annotation`.Transactional
+import test.annotations.models.Category
+import test.annotations.models.Product
+
+public interface CategoryProductResolver {
+  @Transactional
+  public fun products(category: Category): List<Product>
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/resolvers/CategoryResolver.kt]=[
+package test.annotations.resolvers
+
+import kotlin.collections.List
+import test.annotations.models.Category
+
+public interface CategoryResolver {
+  public fun categories(): List<Category>
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/resolvers/GraphQLCodeRegistryConfiguration.kt]=[
+package test.annotations.resolvers
+
+import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLCodeRegistry
+import java.util.concurrent.Executor
+import test.annotations.datafetchers.CategoryProductsDataFetcher
+import test.annotations.datafetchers.MutationDeleteProductDataFetcher
+import test.annotations.datafetchers.MutationUpdateProductDataFetcher
+import test.annotations.datafetchers.ProductProfileDataFetcher
+import test.annotations.datafetchers.QueryCategoriesDataFetcher
+import test.annotations.datafetchers.QueryCreateProductDataFetcher
+import test.annotations.datafetchers.QueryProductByIdDataFetcher
+import test.annotations.datafetchers.QueryProductsDataFetcher
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class GraphQLCodeRegistryConfiguration(
+  public val productProfileResolver: ProductProfileResolver,
+  public val categoryProductResolver: CategoryProductResolver,
+  public val queryResolver: QueryResolver,
+  public val productResolver: ProductResolver,
+  public val productMutationResolver: ProductMutationResolver,
+  public val categoryResolver: CategoryResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) {
+  public fun applyConfiguration(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
+      GraphQLCodeRegistry.Builder {
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Product", "profile"),
+        ProductProfileDataFetcher(productProfileResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Category", "products"),
+        CategoryProductsDataFetcher(categoryProductResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "products"),
+        QueryProductsDataFetcher(queryResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "productById"),
+        QueryProductByIdDataFetcher(productResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "createProduct"),
+        QueryCreateProductDataFetcher(productMutationResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "categories"),
+        QueryCategoriesDataFetcher(categoryResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Mutation", "updateProduct"),
+        MutationUpdateProductDataFetcher(productMutationResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Mutation", "deleteProduct"),
+        MutationDeleteProductDataFetcher(productMutationResolver, deserializer, executor))
+    return graphQLCodeRegistry
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/resolvers/ProductMutationResolver.kt]=[
+package test.annotations.resolvers
+
+import kotlin.Boolean
+import kotlin.String
+import org.springframework.transaction.`annotation`.Transactional
+import test.annotations.models.CreateProductInput
+import test.annotations.models.Product
+import test.annotations.models.UpdateProductInput
+
+public interface ProductMutationResolver {
+  @Transactional
+  public fun createProduct(input: CreateProductInput): Product?
+
+  @Transactional
+  public fun updateProduct(id: String, input: UpdateProductInput): Product?
+
+  @Transactional
+  public fun deleteProduct(id: String): Boolean?
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/resolvers/ProductProfileResolver.kt]=[
+package test.annotations.resolvers
+
+import org.springframework.transaction.`annotation`.Transactional
+import test.annotations.models.Product
+import test.annotations.models.ProductProfile
+
+public interface ProductProfileResolver {
+  @Transactional
+  public fun profile(product: Product): ProductProfile?
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/resolvers/ProductResolver.kt]=[
+package test.annotations.resolvers
+
+import kotlin.String
+import org.springframework.transaction.`annotation`.Transactional
+import test.annotations.models.Product
+
+public interface ProductResolver {
+  @Transactional
+  public fun productById(id: String): Product?
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/resolvers/QueryResolver.kt]=[
+package test.annotations.resolvers
+
+import kotlin.collections.List
+import test.annotations.models.Product
+
+public interface QueryResolver {
+  public fun products(): List<Product>
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/wiring/BaseEntityTypeResolver.kt]=[
+package test.annotations.wiring
+
+import graphql.TypeResolutionEnvironment
+import graphql.schema.GraphQLObjectType
+import graphql.schema.TypeResolver
+import java.lang.IllegalArgumentException
+import test.annotations.models.Product
+
+public class BaseEntityTypeResolver : TypeResolver {
+  override fun getType(env: TypeResolutionEnvironment): GraphQLObjectType {
+
+                val javaObject = env.getObject<Any>()
+                return when(javaObject) {
+            is Product -> env.getSchema().getObjectType("Product")
+    else -> throw IllegalArgumentException("Unexpected type in type resolver ${javaObject}")
+    }
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/wiring/DataLoaderRegistryConfiguration.kt]=[
+package test.annotations.wiring
+
+import java.util.concurrent.Executor
+import org.dataloader.DataLoaderRegistry
+
+public class DataLoaderRegistryConfiguration(
+  public val executor: Executor,
+) {
+  public fun applyConfiguration(registry: DataLoaderRegistry.Builder): DataLoaderRegistry.Builder =
+      registry
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-/test/annotations/wiring/TypeResolverWiring.kt]=[
+package test.annotations.wiring
+
+import graphql.schema.idl.RuntimeWiring
+import graphql.schema.idl.TypeRuntimeWiring
+
+public object TypeResolverWiring {
+  public fun wireTypeResolvers(wiring: RuntimeWiring.Builder): RuntimeWiring.Builder {
+
+                wiring.type(
+                    TypeRuntimeWiring.newTypeWiring("BaseEntity")
+                        .typeResolver(test.annotations.wiring.BaseEntityTypeResolver()).build()
+                )
+                return wiring
+  }
+}
+
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-generated-files]=[
+/test/annotations/datafetchers/QueryProductByIdDataFetcher.kt,/test/annotations/datafetchers/QueryProductsDataFetcher.kt,/test/annotations/datafetchers/CategoryProductsDataFetcher.kt,/test/annotations/datafetchers/MutationUpdateProductDataFetcher.kt,/test/annotations/datafetchers/QueryCreateProductDataFetcher.kt,/test/annotations/datafetchers/QueryCategoriesDataFetcher.kt,/test/annotations/datafetchers/MutationDeleteProductDataFetcher.kt,/test/annotations/datafetchers/ProductProfileDataFetcher.kt,/test/annotations/wiring/BaseEntityTypeResolver.kt,/test/annotations/wiring/DataLoaderRegistryConfiguration.kt,/test/annotations/wiring/TypeResolverWiring.kt,/test/annotations/resolvers/ProductResolver.kt,/test/annotations/resolvers/QueryResolver.kt,/test/annotations/resolvers/ProductMutationResolver.kt,/test/annotations/resolvers/GraphQLCodeRegistryConfiguration.kt,/test/annotations/resolvers/ProductProfileResolver.kt,/test/annotations/resolvers/CategoryProductResolver.kt,/test/annotations/resolvers/CategoryResolver.kt,/test/annotations/models/UpdateProductInput.kt,/test/annotations/models/ProductProfile.kt,/test/annotations/models/BaseEntity.kt,/test/annotations/models/Category.kt,/test/annotations/models/CreateProductInput.kt,/test/annotations/models/Product.kt
+]
+
+
+uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerateWithCustomDirectiveAnnotations[annotation-schema.graphql]=[
+"This directive allows results to be deferred during execution"
+directive @defer(
+    "Deferred behaviour is controlled by this argument"
+    if: Boolean! = true,
+    "A unique label that represents the fragment being deferred"
+    label: String
+  ) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Marks the field, argument, input field or enum value as deprecated"
+directive @deprecated(
+    "The reason for the deprecation"
+    reason: String! = "No longer supported"
+  ) on FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM_VALUE | INPUT_FIELD_DEFINITION
+
+"""
+ Test schema for custom directive annotation support
+ This schema exercises various directive combinations to test annotation generation
+ Custom directive definitions
+"""
+directive @entity on OBJECT | INTERFACE
+
+"This directive disables error propagation when a non nullable field returns null for the given operation."
+directive @experimental_disableErrorPropagation on QUERY | MUTATION | SUBSCRIPTION
+
+"Directs the executor to include this field or fragment only when the `if` argument is true"
+directive @include(
+    "Included when true."
+    if: Boolean!
+  ) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Indicates an Input Object is a OneOf Input Object."
+directive @oneOf on INPUT_OBJECT
+
+"Directs the executor to skip this field or fragment when the `if` argument is true."
+directive @skip(
+    "Skipped when true."
+    if: Boolean!
+  ) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Exposes a URL that specifies the behaviour of this scalar."
+directive @specifiedBy(
+    "The URL that specifies the behaviour of this scalar."
+    url: String!
+  ) on SCALAR
+
+directive @table(name: String!) on OBJECT | INTERFACE
+
+directive @transactional on FIELD_DEFINITION
+
+directive @validated on FIELD_DEFINITION | INPUT_OBJECT
+
+" Interface type with custom directives (marker annotation)"
+interface BaseEntity @entity {
+  createdAt: DateTime
+  id: ID!
+}
+
+" Object type with only parameterized directive"
+type Category @table(name : "categories") {
+  description: String
+  id: ID!
+  name: String!
+  " Resolver field with custom directive only"
+  products: [Product!]! @transactional
+}
+
+" Mutation type to test more resolver combinations"
+type Mutation {
+  deleteProduct(id: ID!): Boolean @transactional
+  updateProduct(id: ID!, input: UpdateProductInput!): Product @transactional
+}
+
+" Object type with multiple custom directives (marker + parameterized)"
+type Product implements BaseEntity @entity @table(name : "products") {
+  createdAt: DateTime
+  id: ID!
+  name: String!
+  price: Float!
+  " Resolver field with both @resolver and custom directive"
+  profile: ProductProfile @transactional
+}
+
+" Object type without custom directives (for comparison)"
+type ProductProfile {
+  description: String
+  id: ID!
+  tags: [String!]!
+}
+
+" Query type with resolver methods having custom directives"
+type Query {
+  " Regular resolver without custom directives"
+  categories: [Category!]!
+  " Resolver field with validated input"
+  createProduct(input: CreateProductInput!): Product @transactional
+  " Resolver field with custom directive"
+  productById(id: ID!): Product @transactional
+  " Regular field without custom directives"
+  products: [Product!]!
+}
+
+scalar DateTime
+
+" Input type with custom directive"
+input CreateProductInput @validated {
+  categoryId: ID!
+  name: String!
+  price: Float!
+}
+
+" Input type without custom directives (for comparison)"
+input UpdateProductInput {
+  name: String
+  price: Float
+}
+
+]
+
+
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[/test/datafetchers/BabyNestedCreatedByBatchDataLoader.kt]=[
 package test.datafetchers
 
@@ -43,7 +908,7 @@ public class BabyNestedCreatedByDataFetcher(
 ) : DataFetcher<CompletableFuture<User>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User> {
     val dataLoader = env.getDataLoader<BabyNested, User>("BabyNestedCreatedByBatchDataLoader") 
-    return dataLoader.load(env.getSource<BabyNested>()) 
+    return dataLoader!!.load(env.getSource<BabyNested>()) 
   }
 }
 
@@ -95,7 +960,7 @@ public class BabyNestedUpdatedByDataFetcher(
 ) : DataFetcher<CompletableFuture<User?>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User?> {
     val dataLoader = env.getDataLoader<BabyNested, User?>("BabyNestedUpdatedByBatchDataLoader") 
-    return dataLoader.load(env.getSource<BabyNested>()) 
+    return dataLoader!!.load(env.getSource<BabyNested>()) 
   }
 }
 
@@ -874,11 +1739,22 @@ uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[generated-files]=[
 
 
 uk.co.lucidsource.ggraphql.plugin.GenerateTest.testGenerate[schema.graphql]=[
+"This directive allows results to be deferred during execution"
+directive @defer(
+    "Deferred behaviour is controlled by this argument"
+    if: Boolean! = true,
+    "A unique label that represents the fragment being deferred"
+    label: String
+  ) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
 "Marks the field, argument, input field or enum value as deprecated"
 directive @deprecated(
     "The reason for the deprecation"
-    reason: String = "No longer supported"
+    reason: String! = "No longer supported"
   ) on FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM_VALUE | INPUT_FIELD_DEFINITION
+
+"This directive disables error propagation when a non nullable field returns null for the given operation."
+directive @experimental_disableErrorPropagation on QUERY | MUTATION | SUBSCRIPTION
 
 "Directs the executor to include this field or fragment only when the `if` argument is true"
 directive @include(

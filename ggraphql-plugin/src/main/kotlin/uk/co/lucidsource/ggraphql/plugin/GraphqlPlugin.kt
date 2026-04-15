@@ -40,11 +40,21 @@ class GraphqlPlugin : Plugin<Project> {
             t.getSchemaOutFile().convention(extension.schemaOutFile.orElse(directory.file("schema.graphql")))
             t.getKotlinOutputDirectory()
                 .convention(extension.kotlinOutputDirectory.orElse(defaultOutputDir))
+            t.getDirectiveMappings().convention(extension.directiveMappings)
         }
 
         project.tasks.configureEach { task ->
             if (task.name == "compileKotlin") {
                 task.dependsOn(generateTask)
+            }
+        }
+
+        // Configure KSP tasks to run after GraphQL generation when KSP plugin is present
+        project.pluginManager.withPlugin("com.google.devtools.ksp") {
+            project.tasks.configureEach { task ->
+                if (task.javaClass.name.contains("KspAATask")) {
+                    task.mustRunAfter(generateTask)
+                }
             }
         }
     }

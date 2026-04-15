@@ -5,14 +5,19 @@ import graphql.language.Directive
 import graphql.language.DirectivesContainer
 import graphql.language.FieldDefinition
 import graphql.language.InputObjectTypeDefinition
+import graphql.language.InputValueDefinition
+import graphql.language.InterfaceTypeDefinition
 import graphql.language.NodeDirectivesBuilder
+import graphql.language.ObjectTypeDefinition
 import graphql.language.StringValue
 import graphql.language.Type
+import uk.co.lucidsource.ggraphql.plugin.AnnotationAspect
 
 object GraphQLTypeAspects {
     private const val FILTER_FOR_OBJECT_TYPE = "FILTER_FOR_OBJECT_TYPE"
     private const val RETURNS_TYPE_PARAMETER_OF_TYPE = "RETURNS_TYPE_PARAMETER_OF_TYPE"
     private const val FILTER_FIELD_NAME = "FILTER_FIELD_NAME"
+    private const val ANNOTATION_ASPECTS = "ANNOTATION_ASPECTS"
 
     private const val PAGINATED_DIRECTIVE = "paginated"
     private const val IGNORE_TYPE_DIRECTIVE = "ignore"
@@ -108,5 +113,107 @@ object GraphQLTypeAspects {
 
     fun FieldDefinition.getReturnsGenerateTypeParameterOf(): String? {
         return this.additionalData[RETURNS_TYPE_PARAMETER_OF_TYPE]
+    }
+
+    // Annotation aspect support
+
+    /**
+     * Applies annotation aspects to a NodeDirectivesBuilder (e.g., ObjectTypeDefinition.Builder, InterfaceTypeDefinition.Builder).
+     */
+    fun <T : NodeDirectivesBuilder> T.applyAnnotationAspects(aspects: List<AnnotationAspect>): T {
+        val serialized = aspects.map { aspect ->
+            "${aspect.className}|${aspect.arguments.joinToString(",") { it.toString() }}"
+        }.joinToString(";")
+        this.additionalData(ANNOTATION_ASPECTS, serialized)
+        return this
+    }
+
+    /**
+     * Retrieves annotation aspects from a DirectivesContainer (e.g., ObjectTypeDefinition, InterfaceTypeDefinition).
+     */
+    fun DirectivesContainer<*>.getAnnotationAspects(): List<AnnotationAspect> {
+        val serialized = this.additionalData[ANNOTATION_ASPECTS] ?: return emptyList()
+        if (serialized.isEmpty()) return emptyList()
+        
+        return serialized.split(";").filter { it.isNotEmpty() }.map { aspectStr ->
+            val parts = aspectStr.split("|")
+            val className = parts[0]
+            val arguments = if (parts.size > 1 && parts[1].isNotEmpty()) {
+                parts[1].split(",").map { arg ->
+                    // Try to parse the argument back to its original type
+                    arg.toBooleanStrictOrNull() ?: arg.toIntOrNull() ?: arg.toLongOrNull() 
+                        ?: arg.toDoubleOrNull() ?: arg
+                }
+            } else {
+                emptyList()
+            }
+            AnnotationAspect(className, arguments)
+        }
+    }
+
+    /**
+     * Applies annotation aspects to a FieldDefinition.Builder.
+     */
+    fun FieldDefinition.Builder.applyAnnotationAspects(aspects: List<AnnotationAspect>): FieldDefinition.Builder {
+        val serialized = aspects.map { aspect ->
+            "${aspect.className}|${aspect.arguments.joinToString(",") { it.toString() }}"
+        }.joinToString(";")
+        this.additionalData(ANNOTATION_ASPECTS, serialized)
+        return this
+    }
+
+    /**
+     * Retrieves annotation aspects from a FieldDefinition.
+     */
+    fun FieldDefinition.getAnnotationAspects(): List<AnnotationAspect> {
+        val serialized = this.additionalData[ANNOTATION_ASPECTS] ?: return emptyList()
+        if (serialized.isEmpty()) return emptyList()
+        
+        return serialized.split(";").filter { it.isNotEmpty() }.map { aspectStr ->
+            val parts = aspectStr.split("|")
+            val className = parts[0]
+            val arguments = if (parts.size > 1 && parts[1].isNotEmpty()) {
+                parts[1].split(",").map { arg ->
+                    arg.toBooleanStrictOrNull() ?: arg.toIntOrNull() ?: arg.toLongOrNull() 
+                        ?: arg.toDoubleOrNull() ?: arg
+                }
+            } else {
+                emptyList()
+            }
+            AnnotationAspect(className, arguments)
+        }
+    }
+
+    /**
+     * Applies annotation aspects to an InputValueDefinition.Builder.
+     */
+    fun InputValueDefinition.Builder.applyAnnotationAspects(aspects: List<AnnotationAspect>): InputValueDefinition.Builder {
+        val serialized = aspects.map { aspect ->
+            "${aspect.className}|${aspect.arguments.joinToString(",") { it.toString() }}"
+        }.joinToString(";")
+        this.additionalData(ANNOTATION_ASPECTS, serialized)
+        return this
+    }
+
+    /**
+     * Retrieves annotation aspects from an InputValueDefinition.
+     */
+    fun InputValueDefinition.getAnnotationAspects(): List<AnnotationAspect> {
+        val serialized = this.additionalData[ANNOTATION_ASPECTS] ?: return emptyList()
+        if (serialized.isEmpty()) return emptyList()
+        
+        return serialized.split(";").filter { it.isNotEmpty() }.map { aspectStr ->
+            val parts = aspectStr.split("|")
+            val className = parts[0]
+            val arguments = if (parts.size > 1 && parts[1].isNotEmpty()) {
+                parts[1].split(",").map { arg ->
+                    arg.toBooleanStrictOrNull() ?: arg.toIntOrNull() ?: arg.toLongOrNull() 
+                        ?: arg.toDoubleOrNull() ?: arg
+                }
+            } else {
+                emptyList()
+            }
+            AnnotationAspect(className, arguments)
+        }
     }
 }

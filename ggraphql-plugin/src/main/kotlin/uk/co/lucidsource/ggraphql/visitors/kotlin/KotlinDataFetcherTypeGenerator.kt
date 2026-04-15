@@ -18,6 +18,7 @@ import graphql.schema.DataFetchingEnvironment
 import org.dataloader.BatchLoader
 import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
 import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getAnnotationAspects
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getResolverAspectResolverName
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getReturnsGenerateTypeParameterOf
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isBatchDataLoaderResolverAspectApplied
@@ -168,7 +169,7 @@ class KotlinDataFetcherTypeGenerator(
                 if (field.isBatchDataLoaderResolverAspectApplied()) {
                     dataFetcherGet.addCode(
                         CodeBlock.of(
-                            "return dataLoader.load(env.getSource<%T>()) ",
+                            "return dataLoader!!.load(env.getSource<%T>()) ",
                             typeResolver.getKotlinTypeForModel(TypeName(objectTypeDefinition.name))
                                 .copy(nullable = false)
                         )
@@ -200,24 +201,6 @@ class KotlinDataFetcherTypeGenerator(
                             }
                         )
                     )
-                }
-
-                val serviceMethodBuilder = FunSpec.builder(field.name)
-                    .addModifiers(KModifier.ABSTRACT)
-                    .returns(returnType)
-
-                if (!objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
-                    serviceMethodBuilder.addParameter(
-                        objectTypeDefinition.name.replaceFirstChar { it.lowercase() },
-                        typeResolver.getModelTypeForName(objectTypeDefinition.name)
-                    )
-                }
-
-                field.inputValueDefinitions.map {
-                    ParameterSpec.builder(it.name, typeResolver.getKotlinTypeForModel(it.type))
-                        .build()
-                }.forEach {
-                    serviceMethodBuilder.addParameter(it)
                 }
 
                 context.typeSpecs += FileSpec.get(
@@ -268,7 +251,8 @@ class KotlinDataFetcherTypeGenerator(
                     objectTypeName = objectTypeDefinition.name,
                     parameters = parameters,
                     returnType = returnType,
-                    isBulk = field.isBatchDataLoaderResolverAspectApplied()
+                    isBulk = field.isBatchDataLoaderResolverAspectApplied(),
+                    annotationAspects = field.getAnnotationAspects()
                 )
             }
     }

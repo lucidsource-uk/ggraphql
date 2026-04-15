@@ -1,0 +1,77 @@
+# Test schema for custom directive annotation support
+# This schema exercises various directive combinations to test annotation generation
+
+# Custom directive definitions
+directive @entity on OBJECT | INTERFACE
+directive @table(name: String!) on OBJECT | INTERFACE  
+directive @transactional on FIELD_DEFINITION
+directive @validated on INPUT_OBJECT | FIELD_DEFINITION
+
+# Scalar types
+scalar DateTime @type(type: "java.util.Date")
+
+# Interface type with custom directives (marker annotation)
+interface BaseEntity @entity {
+    id: ID!
+    createdAt: DateTime
+}
+
+# Object type with multiple custom directives (marker + parameterized)
+type Product implements BaseEntity @entity @table(name: "products") {
+    id: ID!
+    name: String!
+    price: Float!
+    createdAt: DateTime
+    # Resolver field with both @resolver and custom directive
+    profile: ProductProfile @resolver(name: "ProductProfileResolver") @transactional
+}
+
+# Object type with only parameterized directive
+type Category @table(name: "categories") {
+    id: ID!
+    name: String!
+    description: String
+    # Resolver field with custom directive only
+    products: [Product!]! @resolver(name: "CategoryProductResolver") @transactional
+}
+
+# Input type with custom directive
+input CreateProductInput @validated {
+    name: String!
+    price: Float!
+    categoryId: ID!
+}
+
+# Input type without custom directives (for comparison)
+input UpdateProductInput {
+    name: String
+    price: Float
+}
+
+# Object type without custom directives (for comparison)
+type ProductProfile {
+    id: ID!
+    description: String
+    tags: [String!]!
+}
+
+# Query type with resolver methods having custom directives
+type Query {
+    # Regular field without custom directives
+    products: [Product!]!
+    
+    # Resolver field with custom directive
+    productById(id: ID!): Product @resolver(name: "ProductResolver") @transactional
+    
+    # Resolver field with validated input
+    createProduct(input: CreateProductInput!): Product @resolver(name: "ProductMutationResolver") @transactional
+    
+    # Regular resolver without custom directives
+    categories: [Category!]! @resolver(name: "CategoryResolver")
+}
+
+# Mutation type to test more resolver combinations
+type Mutation {
+    updateProduct(id: ID!, input: UpdateProductInput!): Product @resolver(name: "ProductMutationResolver") @transactional
+    deleteProduct(id: ID!): Boolean @resolver(name: "ProductMutationResolver") @transactional
+}

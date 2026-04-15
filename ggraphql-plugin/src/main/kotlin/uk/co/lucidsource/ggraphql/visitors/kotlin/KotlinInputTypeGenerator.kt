@@ -1,5 +1,7 @@
 package uk.co.lucidsource.ggraphql.visitors.kotlin
 
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -7,13 +9,16 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import graphql.language.DirectivesContainer
 import graphql.language.InputObjectTypeDefinition
 import uk.co.lucidsource.ggraphql.api.filtering.FilterGroupOperator
 import uk.co.lucidsource.ggraphql.api.filtering.FilterOperator
 import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
 import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterGroupCompoundExpression
 import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
+import uk.co.lucidsource.ggraphql.plugin.AnnotationAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects
+import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getAnnotationAspects
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getAppliedFilterFieldNameForTypeAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.getAppliedFilterForTypeAspect
 import uk.co.lucidsource.ggraphql.util.GraphQLTypeAspects.isFilterForTypeAspectApplied
@@ -50,11 +55,47 @@ class KotlinInputTypeGenerator(
             )
             .addProperties(properties)
 
+        // Apply annotations from annotation aspects
+        applyAnnotations(inputTypeBuilder, inputObjectTypeDefinition)
+
         if (inputObjectTypeDefinition.isFilterForTypeAspectApplied()) {
             applyFilterAstGenerate(inputTypeBuilder, inputObjectTypeDefinition)
         }
 
         context.typeSpecs += FileSpec.get(typeResolver.getModelPackageName(), inputTypeBuilder.build())
+    }
+
+    /**
+     * Applies annotations to a TypeSpec.Builder based on annotation aspects from the SDL node.
+     */
+    private fun applyAnnotations(
+        typeBuilder: TypeSpec.Builder,
+        node: DirectivesContainer<*>
+    ): TypeSpec.Builder {
+        val aspects = node.getAnnotationAspects()
+        aspects.forEach { aspect ->
+            typeBuilder.addAnnotation(createAnnotationSpec(aspect))
+        }
+        return typeBuilder
+    }
+
+    /**
+     * Creates a KotlinPoet AnnotationSpec from an AnnotationAspect.
+     */
+    private fun createAnnotationSpec(aspect: AnnotationAspect): AnnotationSpec {
+        val className = ClassName.bestGuess(aspect.className)
+        val builder = AnnotationSpec.builder(className)
+        
+        aspect.arguments.forEach { arg ->
+            when (arg) {
+                is String -> builder.addMember("%S", arg)
+                is Number -> builder.addMember("%L", arg)
+                is Boolean -> builder.addMember("%L", arg)
+                // Handle other argument types as needed
+            }
+        }
+        
+        return builder.build()
     }
 
     private fun applyFilterAstGenerate(inputTypeBuilder: TypeSpec.Builder, inputObject: InputObjectTypeDefinition) {

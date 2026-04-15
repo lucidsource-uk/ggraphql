@@ -41,7 +41,6 @@ import java.io.File
 import java.util.Date
 import java.util.concurrent.ForkJoinPool
 
-
 @ExtendWith(value = [SnapshotExtension::class])
 class GraphQLTest {
     lateinit var expect: Expect
@@ -88,6 +87,10 @@ class GraphQLTest {
         val candidates: MutableList<Candidate>,
         val changesLogs: MutableList<ChangeLog>
     ) : CandidateResolver {
+        override fun batchInvitee(candidate: List<Candidate>): List<Candidate> {
+            return candidates
+        }
+
         override fun audits(
             pageSize: Int?,
             cursor: SimpleToken?,
@@ -211,7 +214,12 @@ class GraphQLTest {
     @Test
     fun testQueryUnionResults() {
         val graphQL = buildSchema(CANDIDATES.toMutableList(), CHANGE_LOGS.toMutableList())
-        val registry = DataLoaderRegistryConfiguration(MockUserResolver(), ForkJoinPool())
+        val registry = DataLoaderRegistryConfiguration(
+            MockCandidateResolver(
+                CANDIDATES.toMutableList(),
+                CHANGE_LOGS.toMutableList()
+            ), MockUserResolver(), ForkJoinPool()
+        )
             .applyConfiguration(DataLoaderRegistry.newRegistry())
             .build()
 

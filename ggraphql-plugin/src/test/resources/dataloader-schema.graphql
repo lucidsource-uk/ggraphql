@@ -1,0 +1,8 @@
+type User {
+    id: Int
+    manager: User! @batchLoader @resolver(name: "UserResolver")
+}
+
+type Query {
+    users: User!
+}

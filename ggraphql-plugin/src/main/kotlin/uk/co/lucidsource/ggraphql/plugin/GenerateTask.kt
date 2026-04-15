@@ -4,10 +4,12 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileTree
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -36,6 +38,9 @@ abstract class GenerateTask : DefaultTask() {
     @OutputDirectory
     abstract fun getKotlinOutputDirectory(): DirectoryProperty
 
+    @Internal
+    abstract fun getDirectiveMappings(): MapProperty<String, AnnotationMapping>
+
     @TaskAction
     fun generate() {
         val schemaFiles = getSchemaFiles().files.toList()
@@ -48,7 +53,8 @@ abstract class GenerateTask : DefaultTask() {
             schemaFiles = schemaFiles,
             packageName = getPackageName().get(),
             kotlinOutputDirectory = getKotlinOutputDirectory().get().asFile,
-            schemaOutputFile = getSchemaOutFile().get().asFile
+            schemaOutputFile = getSchemaOutFile().get().asFile,
+            directiveMappings = getDirectiveMappings().get()
         )
     }
 }

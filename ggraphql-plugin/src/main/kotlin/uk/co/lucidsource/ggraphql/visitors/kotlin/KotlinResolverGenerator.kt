@@ -1,5 +1,7 @@
 package uk.co.lucidsource.ggraphql.visitors.kotlin
 
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -14,6 +16,7 @@ import graphql.schema.GraphQLCodeRegistry
 import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderRegistry
 import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+import uk.co.lucidsource.ggraphql.plugin.AnnotationAspect
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitor
 import uk.co.lucidsource.ggraphql.visitors.SDLNodeVisitorContext
 import java.util.concurrent.Executor
@@ -155,7 +158,7 @@ class KotlinResolverGenerator(
             .interfaceBuilder(resolverName)
             .addFunctions(
                 dataFetchers.map { dataFetcher ->
-                    FunSpec.builder(if (dataFetcher.isBulk) "batch" + dataFetcher.fieldName.replaceFirstChar { it.uppercase() } else dataFetcher.fieldName)
+                    val methodBuilder = FunSpec.builder(if (dataFetcher.isBulk) "batch" + dataFetcher.fieldName.replaceFirstChar { it.uppercase() } else dataFetcher.fieldName)
                         .addModifiers(KModifier.ABSTRACT)
                         .addParameters(
                             dataFetcher.parameters.map {
@@ -170,9 +173,34 @@ class KotlinResolverGenerator(
                             if (dataFetcher.isBulk) List::class.asTypeName()
                                 .parameterizedBy(dataFetcher.returnType.copy(nullable = false)) else dataFetcher.returnType
                         )
-                        .build()
+                    
+                    // Apply annotations from annotation aspects
+                    dataFetcher.annotationAspects.forEach { aspect ->
+                        methodBuilder.addAnnotation(createAnnotationSpec(aspect))
+                    }
+                    
+                    methodBuilder.build()
                 }
             ).build()
+    }
+
+    /**
+     * Creates a KotlinPoet AnnotationSpec from an AnnotationAspect.
+     */
+    private fun createAnnotationSpec(aspect: AnnotationAspect): AnnotationSpec {
+        val className = ClassName.bestGuess(aspect.className)
+        val builder = AnnotationSpec.builder(className)
+        
+        aspect.arguments.forEach { arg ->
+            when (arg) {
+                is String -> builder.addMember("%S", arg)
+                is Number -> builder.addMember("%L", arg)
+                is Boolean -> builder.addMember("%L", arg)
+                // Handle other argument types as needed
+            }
+        }
+        
+        return builder.build()
     }
 
     override fun finalize(context: SDLNodeVisitorContext) {

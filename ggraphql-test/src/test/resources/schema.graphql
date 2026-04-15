@@ -9,6 +9,8 @@ directive @deprecated(
     reason: String = "No longer supported"
   ) on FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM_VALUE | INPUT_FIELD_DEFINITION
 
+directive @entity(name: String) on OBJECT | INPUT_OBJECT
+
 "Directs the executor to include this field or fragment only when the `if` argument is true"
 directive @include(
     "Included when true."
@@ -40,6 +42,7 @@ type Candidate implements IdentifiedEntity {
   audits(cursor: PaginationCursor, pageSize: Int = 10): ChangeLogPaginatedResult!
   firstname: String!
   id: String
+  invitee: Candidate!
   lastname: String!
   status: CandidateStatus!
   tags: [String!]
@@ -108,7 +111,7 @@ type SuccessResponse {
   success: Boolean!
 }
 
-type User {
+type User @entity(name : "derp") {
   avatarUrl: String
   email: String!
   id: String!
