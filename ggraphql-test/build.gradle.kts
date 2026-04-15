@@ -45,6 +45,8 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.+")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("io.github.origin-energy:java-snapshot-testing-junit5:4.0.8")
+    testImplementation("org.slf4j:slf4j-api:2.0.9")
+    testImplementation("org.slf4j:slf4j-simple:2.0.9")
 }
 
 tasks.test {
@@ -55,6 +57,19 @@ tasks.processTestResources {
     dependsOn("graphqlGenerate")
 }
 
+tasks.compileKotlin {
+    dependsOn("graphqlGenerate")
+}
+
+tasks.compileTestKotlin {
+    dependsOn("graphqlGenerate")
+}
+
 kotlin {
     jvmToolchain(21)
+    sourceSets {
+        main {
+            kotlin.srcDir("build/graphql-generated/src/kotlin")
+        }
+    }
 }
