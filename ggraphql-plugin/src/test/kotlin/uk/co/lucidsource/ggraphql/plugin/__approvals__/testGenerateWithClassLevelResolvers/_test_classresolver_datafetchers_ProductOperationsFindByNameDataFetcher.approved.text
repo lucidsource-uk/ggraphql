@@ -1,0 +1,22 @@
+package test.classresolver.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.String
+import kotlin.collections.List
+import test.classresolver.models.Product
+import test.classresolver.resolvers.ProductResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class ProductOperationsFindByNameDataFetcher(
+  public val service: ProductResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<List<Product>>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<Product>> {
+    val name = env.getArgument("name") as String? 
+    return CompletableFuture.supplyAsync({ service.findByName(name = name!!) }, executor)
+  }
+}

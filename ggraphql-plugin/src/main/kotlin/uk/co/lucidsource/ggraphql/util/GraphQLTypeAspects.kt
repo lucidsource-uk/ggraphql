@@ -86,6 +86,16 @@ object GraphQLTypeAspects {
             .argumentsByName["name"]?.value as? StringValue)?.value
     }
 
+    fun ObjectTypeDefinition.getObjectTypeResolverName(): String? {
+        if (!this.hasDirective(RESOLVED_DIRECTIVE)) {
+            return null
+        }
+
+        return (this.getDirectives(RESOLVED_DIRECTIVE)
+            .first()
+            .argumentsByName["name"]?.value as? StringValue)?.value
+    }
+
     fun FieldDefinition.isBatchDataLoaderResolverAspectApplied(): Boolean {
         return this.hasDirective(BATCH_LOADER_DIRECTIVE)
     }

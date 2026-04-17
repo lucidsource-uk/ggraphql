@@ -54,11 +54,11 @@ schema {
 type Mutation {
     persistCandidate(candidate: CandidateInput!): Candidate! @resolver(name: "CandidateResolver")
     deleteCandidate(candidateId: String!): SuccessResponse! @resolver(name: "CandidateResolver")
-    candidates: CandidateMutation! @resolver(name: "TeamMutationResolver")
+    candidates: CandidateMutation!
 }
 
-type CandidateMutation {
-    acceptInvitation(invitationId: ID!): Candidate! @resolver(name: "TeamMutationResolver")
+type CandidateMutation @resolver(name: "TeamMutationResolver") {
+    acceptInvitation(invitationId: ID!): Candidate!
 }
 
 #"Query root"

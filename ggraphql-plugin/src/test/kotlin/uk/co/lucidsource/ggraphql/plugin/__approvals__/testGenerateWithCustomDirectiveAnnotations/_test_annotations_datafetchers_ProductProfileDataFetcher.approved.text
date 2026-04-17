@@ -1,0 +1,20 @@
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import test.annotations.models.Product
+import test.annotations.models.ProductProfile
+import test.annotations.resolvers.ProductProfileResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class ProductProfileDataFetcher(
+  public val service: ProductProfileResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<ProductProfile?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<ProductProfile?> =
+      CompletableFuture.supplyAsync({ service.profile(product = env.getSource<Product>(), ) },
+      executor)
+}

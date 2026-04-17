@@ -1,15 +1,20 @@
 package uk.co.lucidsource.ggraphql.plugin
 
-import au.com.origin.snapshots.Expect
-import au.com.origin.snapshots.junit5.SnapshotExtension
+import org.approvaltests.Approvals
+import org.approvaltests.core.Options
+import org.approvaltests.reporters.AutoApproveReporter
+import org.approvaltests.reporters.JunitReporter
+import org.approvaltests.reporters.UseReporter
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
 import uk.co.lucidsource.ggraphql.Generator
 import java.io.File
 import java.util.Stack
+import kotlin.collections.component1
+import kotlin.collections.component2
 
-@ExtendWith(value = [SnapshotExtension::class])
+//@UseReporter(AutoApproveReporter::class)
+@UseReporter(JunitReporter::class)
 class GenerateTest {
 
     @field:TempDir
@@ -17,8 +22,6 @@ class GenerateTest {
 
     @field:TempDir
     lateinit var schemaOutputDirectory: File
-
-    private lateinit var expect: Expect
 
     @Test
     fun testGenerate() {
@@ -30,16 +33,7 @@ class GenerateTest {
             schemaOutputFile = outputSchemaFile
         )
 
-        expect.scenario("schema.graphql")
-            .toMatchSnapshot(outputSchemaFile.readText())
-
-        val generatedFiles = directoryListing(kotlinOutputDirectory)
-
-        generatedFiles.forEach {
-            expect.scenario(it.key).toMatchSnapshot(it.value)
-        }
-
-        expect.scenario("generated-files").toMatchSnapshot(generatedFiles.keys.joinToString(","))
+        verifyCodeGeneration("testGenerate", outputSchemaFile, directoryListing(kotlinOutputDirectory))
     }
 
     @Test
@@ -74,16 +68,11 @@ class GenerateTest {
             directiveMappings = directiveMappings
         )
 
-        expect.scenario("annotation-schema.graphql")
-            .toMatchSnapshot(outputSchemaFile.readText())
-
-        val generatedFiles = directoryListing(kotlinOutputDirectory)
-
-        generatedFiles.forEach {
-            expect.scenario("annotation-${it.key}").toMatchSnapshot(it.value)
-        }
-
-        expect.scenario("annotation-generated-files").toMatchSnapshot(generatedFiles.keys.joinToString(","))
+        verifyCodeGeneration(
+            "testGenerateWithCustomDirectiveAnnotations",
+            outputSchemaFile,
+            directoryListing(kotlinOutputDirectory)
+        )
     }
 
     @Test
@@ -97,16 +86,48 @@ class GenerateTest {
             schemaOutputFile = outputSchemaFile,
         )
 
-        expect.scenario("dataloader-schema.graphql")
-            .toMatchSnapshot(outputSchemaFile.readText())
+        verifyCodeGeneration("testGenerateWithBatchLoader", outputSchemaFile, directoryListing(kotlinOutputDirectory))
+    }
 
-        val generatedFiles = directoryListing(kotlinOutputDirectory)
+    @Test
+    fun testGenerateWithClassLevelResolvers() {
+        val outputSchemaFile = File(schemaOutputDirectory, "class-resolver-schema.graphql")
 
-        generatedFiles.forEach {
-            expect.scenario("dataloader-schema-${it.key}").toMatchSnapshot(it.value)
+        Generator.generate(
+            schemaFiles = listOf(File("src/test/resources/class-resolver-schema.graphql")),
+            packageName = "test.classresolver",
+            kotlinOutputDirectory = kotlinOutputDirectory,
+            schemaOutputFile = outputSchemaFile,
+        )
+
+        verifyCodeGeneration(
+            "testGenerateWithClassLevelResolvers",
+            outputSchemaFile,
+            directoryListing(kotlinOutputDirectory)
+        )
+    }
+
+    private fun verifyCodeGeneration(testName: String, outputSchemaFile: File, generatedFiles: Map<String, String>) {
+        Approvals.verify(
+            outputSchemaFile.readText(),
+            optionsForFile(testName, "schema.graphqls")
+        )
+
+        generatedFiles.forEach { (fileName, content) ->
+            Approvals.verify(content, optionsForFile(testName, fileName.replace(".kt", ".text")))
         }
+    }
 
-        expect.scenario("dataloader-schema-generated-files").toMatchSnapshot(generatedFiles.keys.joinToString(","))
+    private fun optionsForFile(testName: String, fileName: String): Options {
+        return Options()
+            .forFile()
+            .withBaseName(
+                "__approvals__/${testName}/${
+                    fileName.replace("/", "_").substringBeforeLast(".")
+                }"
+            )
+            .forFile()
+            .withExtension(fileName.substringAfterLast("."))
     }
 
     private fun directoryListing(start: File): Map<String, String> {
@@ -120,7 +141,7 @@ class GenerateTest {
             if (next.isDirectory) {
                 stack.addAll(next.listFiles())
             } else {
-                fileListing.put(next.path.replaceBefore("/test/", ""), next.readText())
+                fileListing[next.path.replaceBefore("/test/", "")] = next.readText()
             }
         }
 

@@ -1,0 +1,19 @@
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.collections.List
+import test.annotations.models.Product
+import test.annotations.resolvers.QueryResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class QueryProductsDataFetcher(
+  public val service: QueryResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<List<Product>>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<Product>> =
+      CompletableFuture.supplyAsync({ service.products() }, executor)
+}

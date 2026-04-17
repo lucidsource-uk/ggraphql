@@ -1,0 +1,9 @@
+package test.annotations.models
+
+import kotlin.Float
+import kotlin.String
+
+public data class UpdateProductInput(
+  public val name: String? = null,
+  public val price: Float? = null,
+)

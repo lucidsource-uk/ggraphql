@@ -1,0 +1,11 @@
+package test.classresolver.resolvers
+
+import kotlin.collections.List
+import test.classresolver.models.ProductOperations
+import test.classresolver.models.User
+
+public interface QueryResolver {
+  public fun users(): List<User>
+
+  public fun products(): ProductOperations? = ProductOperations()
+}

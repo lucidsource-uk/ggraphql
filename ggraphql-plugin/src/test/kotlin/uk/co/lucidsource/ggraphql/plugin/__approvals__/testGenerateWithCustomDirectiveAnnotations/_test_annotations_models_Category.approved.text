@@ -1,0 +1,11 @@
+package test.annotations.models
+
+import com.example.Table
+import kotlin.String
+
+@Table("categories")
+public data class Category(
+  public val id: String,
+  public val name: String,
+  public val description: String?,
+)

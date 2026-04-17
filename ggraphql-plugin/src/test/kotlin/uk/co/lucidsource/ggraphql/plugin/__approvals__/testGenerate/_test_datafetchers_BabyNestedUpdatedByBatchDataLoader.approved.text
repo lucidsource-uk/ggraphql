@@ -1,0 +1,21 @@
+package test.datafetchers
+
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
+import java.util.concurrent.Executor
+import kotlin.collections.List
+import org.dataloader.BatchLoader
+import test.models.BabyNested
+import test.models.User
+import test.resolvers.UserResolver
+
+public class BabyNestedUpdatedByBatchDataLoader(
+  public val service: UserResolver,
+  public val executor: Executor,
+) : BatchLoader<BabyNested, User> {
+  override fun load(keys: List<BabyNested>): CompletionStage<List<User>> {
+
+                    return CompletableFuture.supplyAsync({ service.batchUpdatedBy(keys) }, executor)
+                
+  }
+}

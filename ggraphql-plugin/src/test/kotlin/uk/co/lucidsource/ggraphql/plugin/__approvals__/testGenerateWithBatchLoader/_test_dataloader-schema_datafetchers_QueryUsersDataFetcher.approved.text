@@ -1,0 +1,18 @@
+package test.`dataloader-schema`.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import test.`dataloader-schema`.models.User
+import test.`dataloader-schema`.resolvers.QueryResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class QueryUsersDataFetcher(
+  public val service: QueryResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<User>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User> =
+      CompletableFuture.supplyAsync({ service.users() }, executor)
+}

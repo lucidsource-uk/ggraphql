@@ -25,7 +25,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.10.0")
-    testImplementation("io.github.origin-energy:java-snapshot-testing-junit5:4.+")
+    testImplementation("com.approvaltests:approvaltests:30.1.0")
 }
 
 tasks.test {

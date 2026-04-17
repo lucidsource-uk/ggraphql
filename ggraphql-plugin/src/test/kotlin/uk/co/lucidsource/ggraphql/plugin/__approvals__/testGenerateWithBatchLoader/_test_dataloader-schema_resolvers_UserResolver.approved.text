@@ -1,0 +1,8 @@
+package test.`dataloader-schema`.resolvers
+
+import kotlin.collections.List
+import test.`dataloader-schema`.models.User
+
+public interface UserResolver {
+  public fun batchManager(user: List<User>): List<User>
+}

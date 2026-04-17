@@ -1,0 +1,37 @@
+scalar DateTime @type(type: "java.util.Date")
+
+type User {
+    id: ID
+    name: String
+    email: String
+}
+
+type Product {
+    id: ID
+    name: String
+    price: Float
+    createdAt: DateTime
+}
+
+# Class-level resolver annotation - all methods in this class should use ProductResolver
+type ProductOperations @resolver(name: "ProductResolver") {
+    findById(id: ID!): Product
+    findByName(name: String!): [Product!]!
+    create(name: String!, price: Float!): Product
+    update(id: ID!, name: String, price: Float): Product
+}
+
+# Query type should automatically get QueryResolver
+type Query {
+    users: [User!]!
+    products: ProductOperations
+    # This method should still allow explicit resolver override
+    productById(id: ID!): Product @resolver(name: "CustomProductResolver")
+}
+
+# Mutation type should automatically get MutationResolver  
+type Mutation {
+    createUser(name: String!, email: String!): User
+    updateUser(id: ID!, name: String, email: String): User
+    deleteUser(id: ID!): Boolean
+}

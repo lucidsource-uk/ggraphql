@@ -1,0 +1,20 @@
+package test.classresolver.resolvers
+
+import kotlin.Float
+import kotlin.String
+import kotlin.collections.List
+import test.classresolver.models.Product
+
+public interface ProductResolver {
+  public fun findById(id: String): Product?
+
+  public fun findByName(name: String): List<Product>
+
+  public fun create(name: String, price: Float): Product?
+
+  public fun update(
+    id: String,
+    name: String?,
+    price: Float?,
+  ): Product?
+}

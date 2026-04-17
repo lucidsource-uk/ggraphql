@@ -1,0 +1,8 @@
+package test.models
+
+import kotlin.String
+
+public data class ChildNested(
+  public val id: String?,
+  public val name: String?,
+)

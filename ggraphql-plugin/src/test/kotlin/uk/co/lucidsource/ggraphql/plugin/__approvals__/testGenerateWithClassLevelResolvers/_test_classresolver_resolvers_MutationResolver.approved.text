@@ -1,0 +1,17 @@
+package test.classresolver.resolvers
+
+import kotlin.Boolean
+import kotlin.String
+import test.classresolver.models.User
+
+public interface MutationResolver {
+  public fun createUser(name: String, email: String): User?
+
+  public fun updateUser(
+    id: String,
+    name: String?,
+    email: String?,
+  ): User?
+
+  public fun deleteUser(id: String): Boolean?
+}

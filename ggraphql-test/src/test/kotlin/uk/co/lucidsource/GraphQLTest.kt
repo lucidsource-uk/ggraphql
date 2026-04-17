@@ -21,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 import uk.co.lucidsource.generated.models.Candidate
 import uk.co.lucidsource.generated.models.CandidateFilter
 import uk.co.lucidsource.generated.models.CandidateInput
-import uk.co.lucidsource.generated.models.CandidateMutation
 import uk.co.lucidsource.generated.models.CandidateStatus
 import uk.co.lucidsource.generated.models.CandidateStatusAggregation
 import uk.co.lucidsource.generated.models.ChangeItemList
@@ -32,6 +31,7 @@ import uk.co.lucidsource.generated.models.SuccessResponse
 import uk.co.lucidsource.generated.models.User
 import uk.co.lucidsource.generated.resolvers.CandidateResolver
 import uk.co.lucidsource.generated.resolvers.GraphQLCodeRegistryConfiguration
+import uk.co.lucidsource.generated.resolvers.MutationResolver
 import uk.co.lucidsource.generated.resolvers.QueryTResolver
 import uk.co.lucidsource.generated.resolvers.TeamMutationResolver
 import uk.co.lucidsource.generated.resolvers.UserResolver
@@ -176,8 +176,6 @@ class GraphQLTest {
     class MockTeamMutationResolver(
         val candidates: MutableList<Candidate>
     ) : TeamMutationResolver {
-        // candidates() method has default implementation, no override needed
-        
         override fun acceptInvitation(invitationId: String): Candidate {
             // Mock implementation - return the first candidate or create a new one
             return candidates.firstOrNull() ?: Candidate(
@@ -207,6 +205,7 @@ class GraphQLTest {
                     queryTResolver = MockQueryResolver(candidates),
                     userResolver = MockUserResolver(),
                     teamMutationResolver = MockTeamMutationResolver(candidates),
+                    mutationResolver = object : MutationResolver {},
                     deserializer = deserializer,
                     executor = ForkJoinPool()
                 ).applyConfiguration(newCodeRegistry())

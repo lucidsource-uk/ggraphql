@@ -1,0 +1,20 @@
+package test.wiring
+
+import graphql.TypeResolutionEnvironment
+import graphql.schema.GraphQLObjectType
+import graphql.schema.TypeResolver
+import java.lang.IllegalArgumentException
+import test.models.OtherDto
+import test.models.TestDto
+
+public class ResultsTypeResolver : TypeResolver {
+  override fun getType(env: TypeResolutionEnvironment): GraphQLObjectType {
+
+                val javaObject = env.getObject<Any>()
+                return when(javaObject) {
+            is TestDto -> env.getSchema().getObjectType("TestDto")
+    is OtherDto -> env.getSchema().getObjectType("OtherDto")
+    else -> throw IllegalArgumentException("Unexpected type in type resolver ${javaObject}")
+    }
+  }
+}

@@ -33,7 +33,6 @@ class GraphqlPlugin : Plugin<Project> {
         ) { t ->
             val directory = extension.schemaDirectory.getOrElse(project.layout.projectDirectory)
 
-            t.dependsOn(cleanTask)
             t.getPackageName().convention(extension.packageName.get())
             t.getSchemaGlob().convention(extension.schemaGlob.getOrElse("**/*.graphql"))
             t.getSchemaDirectory().convention(directory)
@@ -46,6 +45,13 @@ class GraphqlPlugin : Plugin<Project> {
         project.tasks.configureEach { task ->
             if (task.name == "compileKotlin") {
                 task.dependsOn(generateTask)
+            }
+        }
+
+        // Make graphqlCleanGenerated run as part of the clean task
+        project.tasks.configureEach { task ->
+            if (task.name == "clean") {
+                task.dependsOn(cleanTask)
             }
         }
 

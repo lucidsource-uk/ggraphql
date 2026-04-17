@@ -1,0 +1,3 @@
+package test.models
+
+public interface Results

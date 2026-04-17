@@ -1,0 +1,11 @@
+package test.annotations.resolvers
+
+import kotlin.collections.List
+import org.springframework.transaction.`annotation`.Transactional
+import test.annotations.models.Category
+import test.annotations.models.Product
+
+public interface CategoryProductResolver {
+  @Transactional
+  public fun products(category: Category): List<Product>
+}

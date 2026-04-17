@@ -1,0 +1,20 @@
+package test.wiring
+
+import graphql.schema.idl.RuntimeWiring
+import graphql.schema.idl.TypeRuntimeWiring
+
+public object TypeResolverWiring {
+  public fun wireTypeResolvers(wiring: RuntimeWiring.Builder): RuntimeWiring.Builder {
+
+                wiring.type(
+                    TypeRuntimeWiring.newTypeWiring("Results")
+                        .typeResolver(test.wiring.ResultsTypeResolver()).build()
+                )
+                
+                wiring.type(
+                    TypeRuntimeWiring.newTypeWiring("IdentifiedEntity")
+                        .typeResolver(test.wiring.IdentifiedEntityTypeResolver()).build()
+                )
+                return wiring
+  }
+}

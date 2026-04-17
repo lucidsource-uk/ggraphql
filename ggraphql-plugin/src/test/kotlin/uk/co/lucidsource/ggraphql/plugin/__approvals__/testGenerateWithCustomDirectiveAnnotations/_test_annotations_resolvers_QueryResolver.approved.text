@@ -1,0 +1,8 @@
+package test.annotations.resolvers
+
+import kotlin.collections.List
+import test.annotations.models.Product
+
+public interface QueryResolver {
+  public fun products(): List<Product>
+}

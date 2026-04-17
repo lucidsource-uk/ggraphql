@@ -1,0 +1,12 @@
+package test.classresolver.models
+
+import java.util.Date
+import kotlin.Float
+import kotlin.String
+
+public data class Product(
+  public val id: String?,
+  public val name: String?,
+  public val price: Float?,
+  public val createdAt: Date?,
+)

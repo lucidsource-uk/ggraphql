@@ -1,0 +1,21 @@
+package test.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.collections.List
+import test.models.BabyNested
+import test.models.ChildNested
+import test.resolvers.NodeResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class ChildNestedBabiesReqDataFetcher(
+  public val service: NodeResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<List<BabyNested>>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<BabyNested>> =
+      CompletableFuture.supplyAsync({ service.babiesReq(childNested = env.getSource<ChildNested>(),
+      ) }, executor)
+}

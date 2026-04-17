@@ -1,0 +1,21 @@
+package test.annotations.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.Boolean
+import kotlin.String
+import test.annotations.resolvers.ProductMutationResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class MutationDeleteProductDataFetcher(
+  public val service: ProductMutationResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<Boolean?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Boolean?> {
+    val id = env.getArgument("id") as String? 
+    return CompletableFuture.supplyAsync({ service.deleteProduct(id = id!!) }, executor)
+  }
+}

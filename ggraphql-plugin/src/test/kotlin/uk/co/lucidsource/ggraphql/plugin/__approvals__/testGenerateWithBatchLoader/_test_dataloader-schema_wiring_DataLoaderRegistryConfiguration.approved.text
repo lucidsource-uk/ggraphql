@@ -1,0 +1,18 @@
+package test.`dataloader-schema`.wiring
+
+import java.util.concurrent.Executor
+import org.dataloader.DataLoaderFactory
+import org.dataloader.DataLoaderRegistry
+import test.`dataloader-schema`.datafetchers.UserManagerBatchDataLoader
+import test.`dataloader-schema`.resolvers.UserResolver
+
+public class DataLoaderRegistryConfiguration(
+  public val userResolver: UserResolver,
+  public val executor: Executor,
+) {
+  public fun applyConfiguration(registry: DataLoaderRegistry.Builder): DataLoaderRegistry.Builder {
+    registry.register("UserManagerBatchDataLoader",
+        DataLoaderFactory.newDataLoader(UserManagerBatchDataLoader(userResolver, executor)))
+    return registry
+  }
+}

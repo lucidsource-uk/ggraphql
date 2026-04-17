@@ -1,0 +1,8 @@
+package test.annotations.resolvers
+
+import kotlin.collections.List
+import test.annotations.models.Category
+
+public interface CategoryResolver {
+  public fun categories(): List<Category>
+}

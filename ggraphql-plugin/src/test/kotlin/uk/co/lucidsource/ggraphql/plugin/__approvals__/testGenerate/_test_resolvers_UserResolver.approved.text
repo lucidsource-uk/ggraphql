@@ -1,0 +1,11 @@
+package test.resolvers
+
+import kotlin.collections.List
+import test.models.BabyNested
+import test.models.User
+
+public interface UserResolver {
+  public fun batchCreatedBy(babyNested: List<BabyNested>): List<User>
+
+  public fun batchUpdatedBy(babyNested: List<BabyNested>): List<User>
+}
