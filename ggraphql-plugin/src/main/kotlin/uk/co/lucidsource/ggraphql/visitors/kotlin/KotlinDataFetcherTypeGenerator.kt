@@ -58,7 +58,7 @@ class KotlinDataFetcherTypeGenerator(
                 CodeBlock.of(
                     """
                 val context = batchLoaderEnvironment.getContext<%T>()
-                return %T.supplyAsync({ service.%L(keys, context = context) }, executor)
+                return %T.supplyAsync({ service.%L(keys, context = context!!) }, executor)
             """,
                     GraphQLContext::class,
                     CompletableFuture::class,

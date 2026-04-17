@@ -1,7 +1,0 @@
-package test.classresolver.wiring
-
-import graphql.schema.idl.RuntimeWiring
-
-public object TypeResolverWiring {
-  public fun wireTypeResolvers(wiring: RuntimeWiring.Builder): RuntimeWiring.Builder = wiring
-}

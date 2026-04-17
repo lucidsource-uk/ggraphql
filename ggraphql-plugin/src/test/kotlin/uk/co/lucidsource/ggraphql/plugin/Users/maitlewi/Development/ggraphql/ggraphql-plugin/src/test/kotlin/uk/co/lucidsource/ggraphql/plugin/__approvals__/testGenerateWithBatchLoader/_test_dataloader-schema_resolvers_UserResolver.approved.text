@@ -1,9 +1,0 @@
-package test.`dataloader-schema`.resolvers
-
-import graphql.GraphQLContext
-import kotlin.collections.List
-import test.`dataloader-schema`.models.User
-
-public interface UserResolver {
-  public fun batchManager(user: List<User>, context: GraphQLContext): List<User>
-}

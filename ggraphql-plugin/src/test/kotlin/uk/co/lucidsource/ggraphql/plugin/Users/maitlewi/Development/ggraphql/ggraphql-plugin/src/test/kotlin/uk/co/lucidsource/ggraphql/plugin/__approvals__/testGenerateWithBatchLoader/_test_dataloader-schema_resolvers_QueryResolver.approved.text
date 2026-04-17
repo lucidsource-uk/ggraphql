@@ -1,8 +1,0 @@
-package test.`dataloader-schema`.resolvers
-
-import graphql.GraphQLContext
-import test.`dataloader-schema`.models.User
-
-public interface QueryResolver {
-  public fun users(context: GraphQLContext): User
-}

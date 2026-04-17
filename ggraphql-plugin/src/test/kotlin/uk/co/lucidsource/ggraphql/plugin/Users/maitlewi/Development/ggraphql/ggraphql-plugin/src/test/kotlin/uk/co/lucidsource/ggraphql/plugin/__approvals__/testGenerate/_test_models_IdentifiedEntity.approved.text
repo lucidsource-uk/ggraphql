@@ -1,7 +1,0 @@
-package test.models
-
-import kotlin.String
-
-public interface IdentifiedEntity {
-  public val id: String?
-}

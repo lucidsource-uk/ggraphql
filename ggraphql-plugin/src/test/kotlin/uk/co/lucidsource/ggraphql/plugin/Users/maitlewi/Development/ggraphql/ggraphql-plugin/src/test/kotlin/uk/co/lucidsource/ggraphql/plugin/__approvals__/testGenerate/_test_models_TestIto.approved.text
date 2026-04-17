@@ -1,7 +1,0 @@
-package test.models
-
-import kotlin.String
-
-public data class TestIto(
-  public val name: String? = null,
-)

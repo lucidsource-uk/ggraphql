@@ -19,7 +19,7 @@ public class UserManagerBatchDataLoader(
 
                     val context = batchLoaderEnvironment.getContext<GraphQLContext>()
                     return CompletableFuture.supplyAsync({ service.batchManager(keys, context =
-        context) }, executor)
+        context!!) }, executor)
                 
   }
 }

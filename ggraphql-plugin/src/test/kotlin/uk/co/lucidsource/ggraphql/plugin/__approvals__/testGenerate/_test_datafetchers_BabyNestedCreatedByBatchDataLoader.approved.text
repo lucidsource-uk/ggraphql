@@ -20,7 +20,7 @@ public class BabyNestedCreatedByBatchDataLoader(
 
                     val context = batchLoaderEnvironment.getContext<GraphQLContext>()
                     return CompletableFuture.supplyAsync({ service.batchCreatedBy(keys, context =
-        context) }, executor)
+        context!!) }, executor)
                 
   }
 }

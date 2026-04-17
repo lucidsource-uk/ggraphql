@@ -1,7 +1,0 @@
-package test.models
-
-import kotlin.String
-
-public data class OtherDto(
-  public val id: String?,
-) : Results
