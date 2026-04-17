@@ -1,0 +1,18 @@
+package test.annotations.wiring
+
+import graphql.TypeResolutionEnvironment
+import graphql.schema.GraphQLObjectType
+import graphql.schema.TypeResolver
+import java.lang.IllegalArgumentException
+import test.annotations.models.Product
+
+public class BaseEntityTypeResolver : TypeResolver {
+  override fun getType(env: TypeResolutionEnvironment): GraphQLObjectType {
+
+                val javaObject = env.getObject<Any>()
+                return when(javaObject) {
+            is Product -> env.getSchema().getObjectType("Product")
+    else -> throw IllegalArgumentException("Unexpected type in type resolver ${javaObject}")
+    }
+  }
+}

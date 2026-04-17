@@ -1,0 +1,9 @@
+package test.annotations.resolvers
+
+import graphql.GraphQLContext
+import kotlin.collections.List
+import test.annotations.models.Category
+
+public interface CategoryResolver {
+  public fun categories(context: GraphQLContext): List<Category>
+}

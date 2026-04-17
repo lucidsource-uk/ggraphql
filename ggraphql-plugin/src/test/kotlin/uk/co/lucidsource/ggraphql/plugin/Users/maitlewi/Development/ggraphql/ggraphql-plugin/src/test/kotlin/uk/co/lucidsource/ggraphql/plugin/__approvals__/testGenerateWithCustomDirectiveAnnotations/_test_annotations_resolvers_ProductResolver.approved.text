@@ -1,0 +1,11 @@
+package test.annotations.resolvers
+
+import graphql.GraphQLContext
+import kotlin.String
+import org.springframework.transaction.`annotation`.Transactional
+import test.annotations.models.Product
+
+public interface ProductResolver {
+  @Transactional
+  public fun productById(id: String, context: GraphQLContext): Product?
+}

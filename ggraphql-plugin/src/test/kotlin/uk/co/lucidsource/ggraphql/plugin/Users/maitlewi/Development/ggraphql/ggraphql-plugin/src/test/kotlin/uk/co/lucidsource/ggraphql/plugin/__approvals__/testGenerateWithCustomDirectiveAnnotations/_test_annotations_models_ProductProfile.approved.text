@@ -1,0 +1,10 @@
+package test.annotations.models
+
+import kotlin.String
+import kotlin.collections.List
+
+public data class ProductProfile(
+  public val id: String,
+  public val description: String?,
+  public val tags: List<String>,
+)

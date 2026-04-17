@@ -1,0 +1,24 @@
+package test.classresolver.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.String
+import test.classresolver.models.User
+import test.classresolver.resolvers.MutationResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class MutationUpdateUserDataFetcher(
+  public val service: MutationResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<User?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User?> {
+    val id = env.getArgument("id") as String? 
+    val name = env.getArgument("name") as String? 
+    val email = env.getArgument("email") as String? 
+    return CompletableFuture.supplyAsync({ service.updateUser(id = id!!, name = name, email = email,
+        context = env.graphQlContext) }, executor)
+  }
+}

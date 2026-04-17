@@ -1,0 +1,54 @@
+package test.resolvers
+
+import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLCodeRegistry
+import java.util.concurrent.Executor
+import test.datafetchers.BabyNestedCreatedByDataFetcher
+import test.datafetchers.BabyNestedUpdatedByDataFetcher
+import test.datafetchers.ChildNestedBabiesDataFetcher
+import test.datafetchers.ChildNestedBabiesReqDataFetcher
+import test.datafetchers.ParentNestedChildrenDataFetcher
+import test.datafetchers.ParentNestedPaginatedKidsDataFetcher
+import test.datafetchers.QueryAnotherOneMethodDataFetcher
+import test.datafetchers.QueryListDataFetcher
+import test.datafetchers.QuerySomeMethodDataFetcher
+import test.datafetchers.QueryStuffDataFetcher
+import test.datafetchers.TestDtoResultsDataFetcher
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class GraphQLCodeRegistryConfiguration(
+  public val userResolver: UserResolver,
+  public val nodeResolver: NodeResolver,
+  public val parentNestedResolver: ParentNestedResolver,
+  public val queryResolver: QueryResolver,
+  public val testDtoResolver: TestDtoResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) {
+  public fun applyConfiguration(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
+      GraphQLCodeRegistry.Builder {
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("BabyNested", "createdBy"),
+        BabyNestedCreatedByDataFetcher(userResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("BabyNested", "updatedBy"),
+        BabyNestedUpdatedByDataFetcher(userResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ChildNested", "babies"),
+        ChildNestedBabiesDataFetcher(nodeResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ChildNested", "babiesReq"),
+        ChildNestedBabiesReqDataFetcher(nodeResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ParentNested", "children"),
+        ParentNestedChildrenDataFetcher(nodeResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("ParentNested", "paginatedKids"),
+        ParentNestedPaginatedKidsDataFetcher(parentNestedResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "stuff"),
+        QueryStuffDataFetcher(queryResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "someMethod"),
+        QuerySomeMethodDataFetcher(queryResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "anotherOneMethod"),
+        QueryAnotherOneMethodDataFetcher(queryResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "list"),
+        QueryListDataFetcher(queryResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("TestDto", "results"),
+        TestDtoResultsDataFetcher(testDtoResolver, deserializer, executor))
+    return graphQLCodeRegistry
+  }
+}

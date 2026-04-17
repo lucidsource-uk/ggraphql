@@ -1,0 +1,7 @@
+package test.`dataloader-schema`.models
+
+import kotlin.Int
+
+public data class User(
+  public val id: Int?,
+)

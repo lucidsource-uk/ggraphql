@@ -1,0 +1,27 @@
+package test.resolvers
+
+import co.uk.somepackage.UnknownType
+import graphql.GraphQLContext
+import kotlin.Int
+import kotlin.String
+import kotlin.collections.List
+import test.models.Results
+import test.models.TestDto
+import test.models.TestDtoFilter
+import test.models.TestIto
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+
+public interface QueryResolver {
+  public fun stuff(context: GraphQLContext): List<Results>
+
+  public fun someMethod(arg: TestIto, context: GraphQLContext): String?
+
+  public fun anotherOneMethod(arg: TestIto?, context: GraphQLContext): String?
+
+  public fun list(
+    `where`: TestDtoFilter?,
+    pageSize: Int?,
+    cursor: UnknownType?,
+    context: GraphQLContext,
+  ): PaginatedResult<TestDto, UnknownType>
+}

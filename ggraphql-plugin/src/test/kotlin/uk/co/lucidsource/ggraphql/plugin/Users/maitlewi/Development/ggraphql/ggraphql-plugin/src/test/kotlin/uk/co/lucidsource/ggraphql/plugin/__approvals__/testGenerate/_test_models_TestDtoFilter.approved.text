@@ -1,0 +1,29 @@
+package test.models
+
+import kotlin.collections.List
+import uk.co.lucidsource.ggraphql.api.filtering.FilterGroupOperator
+import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
+import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterGroupCompoundExpression
+import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
+
+public data class TestDtoFilter(
+  public val all: List<TestDtoFilterCriteria>? = null,
+  public val not: List<TestDtoFilterCriteria>? = null,
+  public val any: List<TestDtoFilterCriteria>? = null,
+) : FilterExpression {
+  override fun ast(): Expression {
+    val all = FilterGroupCompoundExpression(FilterGroupOperator.ALL, all?.map { it.ast() }?.filter {
+        it != Expression.EMPTY_EXPRESSION } ?: emptyList())
+    val not = FilterGroupCompoundExpression(FilterGroupOperator.NOT, not?.map { it.ast() }?.filter {
+        it != Expression.EMPTY_EXPRESSION } ?: emptyList())
+    val any = FilterGroupCompoundExpression(FilterGroupOperator.ANY, any?.map { it.ast() }?.filter {
+        it != Expression.EMPTY_EXPRESSION } ?: emptyList())
+
+                  val filters = listOf(all,not,any).filter{ it.expressions.isNotEmpty() }
+                  if(filters.isEmpty()) {
+                      return Expression.EMPTY_EXPRESSION
+                  }
+                  return FilterGroupCompoundExpression(FilterGroupOperator.ALL, filters)
+                
+  }
+}

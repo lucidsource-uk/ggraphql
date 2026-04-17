@@ -1,0 +1,16 @@
+package test.annotations.models
+
+import com.example.Entity
+import com.example.Table
+import java.util.Date
+import kotlin.Float
+import kotlin.String
+
+@Entity
+@Table("products")
+public data class Product(
+  override val id: String,
+  public val name: String,
+  public val price: Float,
+  override val createdAt: Date?,
+) : BaseEntity

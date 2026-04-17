@@ -1,0 +1,20 @@
+package test.models
+
+import uk.co.lucidsource.ggraphql.api.filtering.FilterGroupOperator
+import uk.co.lucidsource.ggraphql.api.filtering.ast.Expression
+import uk.co.lucidsource.ggraphql.api.filtering.ast.FilterGroupCompoundExpression
+import uk.co.lucidsource.ggraphql.api.filtering.expression.FilterExpression
+
+public data class TestDtoFilterCriteria(
+  public val name: TestDtoNameFilterCriteria? = null,
+  public val age: TestDtoAgeFilterCriteria? = null,
+) : FilterExpression {
+  override fun ast(): Expression {
+    val fieldExpressions = listOf(name,age).filterNotNull().map { it.ast() }.filter { it !=
+        Expression.EMPTY_EXPRESSION }
+    if(fieldExpressions.isEmpty()) {
+        return Expression.EMPTY_EXPRESSION
+    }
+    return FilterGroupCompoundExpression(FilterGroupOperator.ALL, fieldExpressions)
+  }
+}

@@ -1,0 +1,24 @@
+package test.classresolver.datafetchers
+
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.Float
+import kotlin.String
+import test.classresolver.models.Product
+import test.classresolver.resolvers.ProductResolver
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class ProductOperationsCreateDataFetcher(
+  public val service: ProductResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<Product?>> {
+  override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Product?> {
+    val name = env.getArgument("name") as String? 
+    val price = env.getArgument("price") as Float? 
+    return CompletableFuture.supplyAsync({ service.create(name = name!!, price = price!!, context =
+        env.graphQlContext) }, executor)
+  }
+}

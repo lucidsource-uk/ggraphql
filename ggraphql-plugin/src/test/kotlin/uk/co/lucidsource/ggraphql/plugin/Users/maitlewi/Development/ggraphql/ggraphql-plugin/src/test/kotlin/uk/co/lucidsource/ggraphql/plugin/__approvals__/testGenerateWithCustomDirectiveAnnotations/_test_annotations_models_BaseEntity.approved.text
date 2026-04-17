@@ -1,0 +1,10 @@
+package test.annotations.models
+
+import java.util.Date
+import kotlin.String
+
+public interface BaseEntity {
+  public val id: String
+
+  public val createdAt: Date?
+}

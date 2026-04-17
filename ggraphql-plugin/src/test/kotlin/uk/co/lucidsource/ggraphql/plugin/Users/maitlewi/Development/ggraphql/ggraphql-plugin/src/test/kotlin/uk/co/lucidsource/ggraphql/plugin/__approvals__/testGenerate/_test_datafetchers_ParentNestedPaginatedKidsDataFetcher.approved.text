@@ -1,0 +1,28 @@
+package test.datafetchers
+
+import co.uk.somepackage.UnknownType
+import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import kotlin.Int
+import test.models.ChildNested
+import test.resolvers.ParentNestedResolver
+import uk.co.lucidsource.ggraphql.api.pagination.PaginatedResult
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class ParentNestedPaginatedKidsDataFetcher(
+  public val service: ParentNestedResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) : DataFetcher<CompletableFuture<PaginatedResult<ChildNested, UnknownType>>> {
+  override fun `get`(env: DataFetchingEnvironment):
+      CompletableFuture<PaginatedResult<ChildNested, UnknownType>> {
+    val pageSize = env.getArgument("pageSize") as Int? 
+    val cursor = env.getArgument<Any>("cursor")?.let { deserializer.deserialize(it,
+        UnknownType::class.java) } 
+    return CompletableFuture.supplyAsync({ service.paginatedKids(parentNested =
+        env.getSource<test.models.ParentNested>(), pageSize = pageSize, cursor = cursor, context =
+        env.graphQlContext) }, executor)
+  }
+}

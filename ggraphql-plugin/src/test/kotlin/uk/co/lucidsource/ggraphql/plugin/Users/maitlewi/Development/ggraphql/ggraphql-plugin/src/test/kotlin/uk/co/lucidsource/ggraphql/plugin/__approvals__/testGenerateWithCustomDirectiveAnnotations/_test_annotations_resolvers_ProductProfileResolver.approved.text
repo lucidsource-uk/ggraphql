@@ -1,0 +1,11 @@
+package test.annotations.resolvers
+
+import graphql.GraphQLContext
+import org.springframework.transaction.`annotation`.Transactional
+import test.annotations.models.Product
+import test.annotations.models.ProductProfile
+
+public interface ProductProfileResolver {
+  @Transactional
+  public fun profile(product: Product, context: GraphQLContext): ProductProfile?
+}

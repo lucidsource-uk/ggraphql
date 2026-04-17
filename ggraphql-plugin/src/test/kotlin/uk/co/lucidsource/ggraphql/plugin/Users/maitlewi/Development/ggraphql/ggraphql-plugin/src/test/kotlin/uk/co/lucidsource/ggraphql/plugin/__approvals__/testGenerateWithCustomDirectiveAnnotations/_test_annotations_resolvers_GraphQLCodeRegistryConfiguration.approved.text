@@ -1,0 +1,46 @@
+package test.annotations.resolvers
+
+import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLCodeRegistry
+import java.util.concurrent.Executor
+import test.annotations.datafetchers.CategoryProductsDataFetcher
+import test.annotations.datafetchers.MutationDeleteProductDataFetcher
+import test.annotations.datafetchers.MutationUpdateProductDataFetcher
+import test.annotations.datafetchers.ProductProfileDataFetcher
+import test.annotations.datafetchers.QueryCategoriesDataFetcher
+import test.annotations.datafetchers.QueryCreateProductDataFetcher
+import test.annotations.datafetchers.QueryProductByIdDataFetcher
+import test.annotations.datafetchers.QueryProductsDataFetcher
+import uk.co.lucidsource.ggraphql.api.serde.Deserializer
+
+public class GraphQLCodeRegistryConfiguration(
+  public val productProfileResolver: ProductProfileResolver,
+  public val categoryProductResolver: CategoryProductResolver,
+  public val queryResolver: QueryResolver,
+  public val productResolver: ProductResolver,
+  public val productMutationResolver: ProductMutationResolver,
+  public val categoryResolver: CategoryResolver,
+  public val deserializer: Deserializer,
+  public val executor: Executor,
+) {
+  public fun applyConfiguration(graphQLCodeRegistry: GraphQLCodeRegistry.Builder):
+      GraphQLCodeRegistry.Builder {
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Product", "profile"),
+        ProductProfileDataFetcher(productProfileResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Category", "products"),
+        CategoryProductsDataFetcher(categoryProductResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "products"),
+        QueryProductsDataFetcher(queryResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "productById"),
+        QueryProductByIdDataFetcher(productResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "createProduct"),
+        QueryCreateProductDataFetcher(productMutationResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Query", "categories"),
+        QueryCategoriesDataFetcher(categoryResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Mutation", "updateProduct"),
+        MutationUpdateProductDataFetcher(productMutationResolver, deserializer, executor))
+    graphQLCodeRegistry.dataFetcher(FieldCoordinates.coordinates("Mutation", "deleteProduct"),
+        MutationDeleteProductDataFetcher(productMutationResolver, deserializer, executor))
+    return graphQLCodeRegistry
+  }
+}

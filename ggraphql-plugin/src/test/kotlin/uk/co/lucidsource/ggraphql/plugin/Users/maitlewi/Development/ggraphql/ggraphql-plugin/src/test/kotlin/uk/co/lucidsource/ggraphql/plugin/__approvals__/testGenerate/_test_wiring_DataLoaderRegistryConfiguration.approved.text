@@ -1,0 +1,21 @@
+package test.wiring
+
+import java.util.concurrent.Executor
+import org.dataloader.DataLoaderFactory
+import org.dataloader.DataLoaderRegistry
+import test.datafetchers.BabyNestedCreatedByBatchDataLoader
+import test.datafetchers.BabyNestedUpdatedByBatchDataLoader
+import test.resolvers.UserResolver
+
+public class DataLoaderRegistryConfiguration(
+  public val userResolver: UserResolver,
+  public val executor: Executor,
+) {
+  public fun applyConfiguration(registry: DataLoaderRegistry.Builder): DataLoaderRegistry.Builder {
+    registry.register("BabyNestedCreatedByBatchDataLoader",
+        DataLoaderFactory.newDataLoader(BabyNestedCreatedByBatchDataLoader(userResolver, executor)))
+    registry.register("BabyNestedUpdatedByBatchDataLoader",
+        DataLoaderFactory.newDataLoader(BabyNestedUpdatedByBatchDataLoader(userResolver, executor)))
+    return registry
+  }
+}

@@ -1,0 +1,24 @@
+package test.annotations.resolvers
+
+import graphql.GraphQLContext
+import kotlin.Boolean
+import kotlin.String
+import org.springframework.transaction.`annotation`.Transactional
+import test.annotations.models.CreateProductInput
+import test.annotations.models.Product
+import test.annotations.models.UpdateProductInput
+
+public interface ProductMutationResolver {
+  @Transactional
+  public fun createProduct(input: CreateProductInput, context: GraphQLContext): Product?
+
+  @Transactional
+  public fun updateProduct(
+    id: String,
+    input: UpdateProductInput,
+    context: GraphQLContext,
+  ): Product?
+
+  @Transactional
+  public fun deleteProduct(id: String, context: GraphQLContext): Boolean?
+}
