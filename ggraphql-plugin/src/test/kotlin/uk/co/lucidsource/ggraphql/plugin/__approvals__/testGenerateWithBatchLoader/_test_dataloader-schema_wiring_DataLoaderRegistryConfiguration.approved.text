@@ -2,6 +2,7 @@ package test.`dataloader-schema`.wiring
 
 import java.util.concurrent.Executor
 import org.dataloader.DataLoaderFactory
+import org.dataloader.DataLoaderOptions
 import org.dataloader.DataLoaderRegistry
 import test.`dataloader-schema`.datafetchers.UserManagerBatchDataLoader
 import test.`dataloader-schema`.resolvers.UserResolver
@@ -9,10 +10,12 @@ import test.`dataloader-schema`.resolvers.UserResolver
 public class DataLoaderRegistryConfiguration(
   public val userResolver: UserResolver,
   public val executor: Executor,
+  public val options: DataLoaderOptions,
 ) {
   public fun applyConfiguration(registry: DataLoaderRegistry.Builder): DataLoaderRegistry.Builder {
     registry.register("UserManagerBatchDataLoader",
-        DataLoaderFactory.newDataLoader(UserManagerBatchDataLoader(userResolver, executor)))
+        DataLoaderFactory.newDataLoader(UserManagerBatchDataLoader(userResolver, executor),
+        options))
     return registry
   }
 }

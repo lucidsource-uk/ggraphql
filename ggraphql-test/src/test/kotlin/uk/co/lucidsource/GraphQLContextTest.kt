@@ -15,6 +15,7 @@ import graphql.schema.GraphQLScalarType
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
+import org.dataloader.DataLoaderOptions
 import org.dataloader.DataLoaderRegistry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -391,7 +392,8 @@ class GraphQLContextTest {
         val registry = DataLoaderRegistryConfiguration(
             candidateResolver,
             ContextAwareUserResolver(),
-            ForkJoinPool()
+            ForkJoinPool(),
+            options = DataLoaderOptions()
         ).applyConfiguration(DataLoaderRegistry.newRegistry())
             .build()
 

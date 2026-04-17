@@ -29,5 +29,5 @@ ExecutionResultImpl{errors=[], data={candidates={nodes=[{id=1, firstname=John, l
 
 
 uk.co.lucidsource.GraphQLTest.testQueryUnionResults=[
-ExecutionResultImpl{errors=[ExceptionWhileDataFetching{path=[candidate, audits, nodes, 0, user], exception=java.lang.NullPointerException, locations=[SourceLocation{line=1, column=62}]}, ExceptionWhileDataFetching{path=[candidate, audits, nodes, 1, user], exception=java.lang.NullPointerException, locations=[SourceLocation{line=1, column=62}]}], data={candidate=null}, dataPresent=true, extensions=null}
+ExecutionResultImpl{errors=[ExceptionWhileDataFetching{path=[candidate, audits, nodes, 1, user], exception=java.lang.NullPointerException, locations=[SourceLocation{line=1, column=62}]}, ExceptionWhileDataFetching{path=[candidate, audits, nodes, 0, user], exception=java.lang.NullPointerException, locations=[SourceLocation{line=1, column=62}]}], data={candidate=null}, dataPresent=true, extensions=null}
 ]

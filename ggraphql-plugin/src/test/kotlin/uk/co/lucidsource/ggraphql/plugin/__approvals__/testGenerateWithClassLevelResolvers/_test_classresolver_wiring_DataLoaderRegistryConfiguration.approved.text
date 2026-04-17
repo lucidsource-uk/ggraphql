@@ -1,10 +1,12 @@
 package test.classresolver.wiring
 
 import java.util.concurrent.Executor
+import org.dataloader.DataLoaderOptions
 import org.dataloader.DataLoaderRegistry
 
 public class DataLoaderRegistryConfiguration(
   public val executor: Executor,
+  public val options: DataLoaderOptions,
 ) {
   public fun applyConfiguration(registry: DataLoaderRegistry.Builder): DataLoaderRegistry.Builder =
       registry
