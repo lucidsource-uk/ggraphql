@@ -1,10 +1,12 @@
 package test.datafetchers
 
+import graphql.GraphQLContext
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.Executor
 import kotlin.collections.List
-import org.dataloader.BatchLoader
+import org.dataloader.BatchLoaderEnvironment
+import org.dataloader.BatchLoaderWithContext
 import test.models.BabyNested
 import test.models.User
 import test.resolvers.UserResolver
@@ -12,10 +14,13 @@ import test.resolvers.UserResolver
 public class BabyNestedCreatedByBatchDataLoader(
   public val service: UserResolver,
   public val executor: Executor,
-) : BatchLoader<BabyNested, User> {
-  override fun load(keys: List<BabyNested>): CompletionStage<List<User>> {
+) : BatchLoaderWithContext<BabyNested, User> {
+  override fun load(keys: List<BabyNested>, batchLoaderEnvironment: BatchLoaderEnvironment):
+      CompletionStage<List<User>> {
 
-                    return CompletableFuture.supplyAsync({ service.batchCreatedBy(keys) }, executor)
+                    val context = batchLoaderEnvironment.getContext<GraphQLContext>()
+                    return CompletableFuture.supplyAsync({ service.batchCreatedBy(keys, context =
+        context) }, executor)
                 
   }
 }

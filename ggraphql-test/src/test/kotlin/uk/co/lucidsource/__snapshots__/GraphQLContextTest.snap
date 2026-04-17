@@ -1,0 +1,28 @@
+uk.co.lucidsource.GraphQLContextTest.testContextPassedToArgumentResolvers=[
+ExecutionResultImpl{errors=[], data={testNullArgument=context-passed-test-user-123, testNonNullArgument=context-passed-test-user-123, testSingleArgument=context-passed-test-user-123}, dataPresent=true, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLContextTest.testContextPassedToBatchLoaders=[
+ExecutionResultImpl{errors=[], data={candidate={id=test-batch, firstname=Context, lastname=Test}}, dataPresent=true, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLContextTest.testContextPassedToMutationResolvers=[
+ExecutionResultImpl{errors=[], data={persistCandidate={id=context-test-test-user-123, firstname=Context, lastname=Test}, deleteCandidate={success=true}}, dataPresent=true, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLContextTest.testContextPassedToNestedMutationResolvers=[
+ExecutionResultImpl{errors=[], data={candidates={acceptInvitation={id=accepted-inv-123, firstname=Accepted, lastname=By-test-user-123}}}, dataPresent=true, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLContextTest.testContextPassedToPaginatedResolvers=[
+ExecutionResultImpl{errors=[], data={candidates={nodes=[{id=ctx-1, firstname=Context, lastname=User, audits={total=0, pageNumber=1}}], total=1, pageNumber=1}}, dataPresent=true, extensions=null}
+]
+
+
+uk.co.lucidsource.GraphQLContextTest.testContextPassedToQueryResolvers=[
+ExecutionResultImpl{errors=[], data={candidate={id=test-123, firstname=Context, lastname=Test, status=INTERVIEWING}, aggregateByStatus={interviewingCount=1, seekingCount=0, notSeekingCount=0}}, dataPresent=true, extensions=null}
+]

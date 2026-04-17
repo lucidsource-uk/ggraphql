@@ -1,5 +1,6 @@
 package uk.co.lucidsource.ggraphql.visitors.kotlin
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -51,12 +52,15 @@ class KotlinDataFetcherTypeGenerator(
 
         val loadMethod = FunSpec.builder("load")
             .addParameter("keys", MutableList::class.asTypeName().parameterizedBy(sourceType))
+            .addParameter("batchLoaderEnvironment", ClassName("org.dataloader", "BatchLoaderEnvironment"))
             .addModifiers(KModifier.OVERRIDE)
             .addCode(
                 CodeBlock.of(
                     """
-                return %T.supplyAsync({ service.%L(keys) }, executor)
+                val context = batchLoaderEnvironment.getContext<%T>()
+                return %T.supplyAsync({ service.%L(keys, context = context) }, executor)
             """,
+                    GraphQLContext::class,
                     CompletableFuture::class,
                     fieldDefinition.defaultBatchLoaderName()
                 )
@@ -74,8 +78,10 @@ class KotlinDataFetcherTypeGenerator(
             typeResolver.getDataFetcherPackageName(),
             TypeSpec.classBuilder(objectTypeDefinition.defaultBatchDataFetcherName(fieldDefinition))
                 .addSuperinterface(
-                    BatchLoader::class.asTypeName()
-                        .parameterizedBy(sourceType.copy(nullable = false), returnType.copy(nullable = false))
+                    ClassName("org.dataloader", "BatchLoaderWithContext").parameterizedBy(
+                        sourceType.copy(nullable = false), 
+                        returnType.copy(nullable = false)
+                    )
                 )
                 .addProperty(
                     PropertySpec.builder("service", typeResolver.getResolverTypeForName(serviceName))

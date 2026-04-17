@@ -4,7 +4,6 @@ import org.approvaltests.Approvals
 import org.approvaltests.core.Options
 import org.approvaltests.reporters.AutoApproveReporter
 import org.approvaltests.reporters.JunitReporter
-import org.approvaltests.reporters.UseReporter
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import uk.co.lucidsource.ggraphql.Generator
@@ -13,8 +12,6 @@ import java.util.Stack
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-//@UseReporter(AutoApproveReporter::class)
-@UseReporter(JunitReporter::class)
 class GenerateTest {
 
     @field:TempDir
@@ -108,13 +105,19 @@ class GenerateTest {
     }
 
     private fun verifyCodeGeneration(testName: String, outputSchemaFile: File, generatedFiles: Map<String, String>) {
+        val options = if (System.getProperty("approveAll") == "true") {
+            Options().withReporter(AutoApproveReporter())
+        } else {
+            Options().withReporter(JunitReporter())
+        }
+        
         Approvals.verify(
             outputSchemaFile.readText(),
-            optionsForFile(testName, "schema.graphqls")
+            optionsForFile(testName, "schema.graphqls").withReporter(options.reporter)
         )
 
         generatedFiles.forEach { (fileName, content) ->
-            Approvals.verify(content, optionsForFile(testName, fileName.replace(".kt", ".text")))
+            Approvals.verify(content, optionsForFile(testName, fileName.replace(".kt", ".text")).withReporter(options.reporter))
         }
     }
 

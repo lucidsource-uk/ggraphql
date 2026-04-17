@@ -24,22 +24,21 @@ This project uses ApprovalTests for snapshot testing of generated code. Here's h
 2. **Compare with `.approved.*` files** - these show what was expected
 3. **If the new output is correct**, approve it by replacing the `.approved.*` file with the `.received.*` file
 
-## Auto-Approving Changes
+## Regenerating Approval Tests
 
-To automatically approve all changes (useful when intentionally updating generated code):
+To automatically regenerate all approval test files (useful when intentionally updating generated code):
 
-1. **Temporarily modify the test class**:
-   ```kotlin
-   // Comment out the current reporter
-   // @UseReporter(JunitReporter::class)
-   
-   // Uncomment the auto-approve reporter
-   @UseReporter(AutoApproveReporter::class)
-   ```
+### Option 1: Use the dedicated Gradle task (Recommended)
+```bash
+./gradlew regenerateApprovalTests
+```
 
-2. **Run the tests** - this will automatically update all `.approved.*` files
+### Option 2: Pass system property to test task
+```bash
+./gradlew test -DapproveAll=true
+```
 
-3. **Revert the reporter change** back to `JunitReporter::class`
+Both methods will automatically update all `.approved.*` files with the current test output without requiring any code changes.
 
 ## Custom Approval Namer
 

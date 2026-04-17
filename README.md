@@ -438,6 +438,28 @@ class GraphQLConfig {
 - Gradle 7.0+
 - Java 11+
 
+## Development
+
+### Running Tests
+
+```bash
+./gradlew test
+```
+
+### Regenerating Approval Tests
+
+The project uses ApprovalTests for snapshot testing of generated code. When you make changes that affect the generated output, you can regenerate the approval test files:
+
+```bash
+# Regenerate all approval test files
+./gradlew regenerateApprovalTests
+
+# Or pass the system property directly
+./gradlew test -DapproveAll=true
+```
+
+This will automatically update all `.approved.*` files with the current test output, eliminating the need to manually edit test files.
+
 ## License
 
 Licensed under the MIT License. See [LICENSE](LICENSE) for details. 

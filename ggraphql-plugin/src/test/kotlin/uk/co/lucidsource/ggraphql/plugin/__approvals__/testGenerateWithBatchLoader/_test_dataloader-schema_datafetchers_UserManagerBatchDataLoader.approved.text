@@ -1,20 +1,25 @@
 package test.`dataloader-schema`.datafetchers
 
+import graphql.GraphQLContext
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.Executor
 import kotlin.collections.List
-import org.dataloader.BatchLoader
+import org.dataloader.BatchLoaderEnvironment
+import org.dataloader.BatchLoaderWithContext
 import test.`dataloader-schema`.models.User
 import test.`dataloader-schema`.resolvers.UserResolver
 
 public class UserManagerBatchDataLoader(
   public val service: UserResolver,
   public val executor: Executor,
-) : BatchLoader<User, User> {
-  override fun load(keys: List<User>): CompletionStage<List<User>> {
+) : BatchLoaderWithContext<User, User> {
+  override fun load(keys: List<User>, batchLoaderEnvironment: BatchLoaderEnvironment):
+      CompletionStage<List<User>> {
 
-                    return CompletableFuture.supplyAsync({ service.batchManager(keys) }, executor)
+                    val context = batchLoaderEnvironment.getContext<GraphQLContext>()
+                    return CompletableFuture.supplyAsync({ service.batchManager(keys, context =
+        context) }, executor)
                 
   }
 }

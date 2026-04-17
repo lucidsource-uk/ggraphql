@@ -30,4 +30,20 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    
+    // Allow passing system properties to tests
+    systemProperties(System.getProperties().toMap() as Map<String, Any>)
+}
+
+tasks.register<Test>("regenerateApprovalTests") {
+    group = "verification"
+    description = "Regenerate all approval test files"
+    useJUnitPlatform()
+    
+    // Set the system property to auto-approve all tests
+    systemProperty("approveAll", "true")
+    
+    // Copy test configuration from main test task
+    testClassesDirs = tasks.test.get().testClassesDirs
+    classpath = tasks.test.get().classpath
 }
