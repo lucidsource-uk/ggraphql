@@ -17,6 +17,7 @@ public class QuerySomeMethodDataFetcher(
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<String?> {
     val arg = env.getArgument<Any>("arg")?.let { deserializer.deserialize(it, TestIto::class.java) }
         
-    return CompletableFuture.supplyAsync({ service.someMethod(arg = arg!!) }, executor)
+    return CompletableFuture.supplyAsync({ service.someMethod(arg = arg!!, context =
+        env.graphQlContext) }, executor)
   }
 }

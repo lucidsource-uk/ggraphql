@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import graphql.ExecutionInput
 import graphql.ExecutionInput.newExecutionInput
 import graphql.GraphQL
+import graphql.GraphQLContext
 import graphql.Scalars
 import graphql.execution.AsyncExecutionStrategy
 import graphql.scalars.ExtendedScalars
@@ -89,14 +90,14 @@ class GraphQLTest {
         val candidates: MutableList<Candidate>,
         val changesLogs: MutableList<ChangeLog>
     ) : CandidateResolver {
-        override fun batchInvitee(candidate: List<Candidate>): List<Candidate> {
+        override fun batchInvitee(candidate: List<Candidate>, context: GraphQLContext): List<Candidate> {
             return candidates
         }
 
         override fun audits(
             pageSize: Int?,
             cursor: SimpleToken?,
-            candidate: Candidate
+            candidate: Candidate, context: GraphQLContext
         ): PaginatedResult<ChangeLog, SimpleToken> {
             return PaginatedResult(
                 nodes = changesLogs,
@@ -106,7 +107,7 @@ class GraphQLTest {
             )
         }
 
-        override fun persistCandidate(candidate: CandidateInput): Candidate {
+        override fun persistCandidate(candidate: CandidateInput, context: GraphQLContext): Candidate {
             val newCandidate = Candidate(
                 id = "99",
                 firstname = candidate.firstname,
@@ -118,7 +119,7 @@ class GraphQLTest {
             return newCandidate
         }
 
-        override fun deleteCandidate(candidateId: String): SuccessResponse {
+        override fun deleteCandidate(candidateId: String, context: GraphQLContext): SuccessResponse {
             val candidate = candidates.firstOrNull { it.id == candidateId }
             if (candidate != null) {
                 candidates.remove(candidate)
@@ -126,7 +127,7 @@ class GraphQLTest {
             return SuccessResponse(candidate != null)
         }
 
-        override fun candidate(candidateId: String): Candidate? {
+        override fun candidate(candidateId: String, context: GraphQLContext): Candidate? {
             return candidates.firstOrNull { it.id == candidateId }
         }
     }
@@ -134,7 +135,7 @@ class GraphQLTest {
     class MockQueryResolver(
         val candidates: MutableList<Candidate>
     ) : QueryTResolver {
-        override fun aggregateByStatus(): CandidateStatusAggregation {
+        override fun aggregateByStatus(context: GraphQLContext): CandidateStatusAggregation {
             return CandidateStatusAggregation(
                 interviewingCount = candidates.count { it.status == CandidateStatus.INTERVIEWING },
                 seekingCount = candidates.count { it.status == CandidateStatus.SEEKING },
@@ -142,33 +143,33 @@ class GraphQLTest {
             )
         }
 
-        override fun testNullArgument(input: CandidateInput?, int: Int?): String? {
+        override fun testNullArgument(input: CandidateInput?, int: Int?, context: GraphQLContext): String? {
             return "worked"
         }
 
-        override fun testNonNullArgument(input: CandidateInput, int: Int): String? {
+        override fun testNonNullArgument(input: CandidateInput, int: Int, context: GraphQLContext): String? {
             return "worked"
         }
 
-        override fun testSingleArgument(input: CandidateInput): String? {
+        override fun testSingleArgument(input: CandidateInput, context: GraphQLContext): String? {
             return "worked"
         }
 
         override fun candidates(
             where: CandidateFilter?,
             pageSize: Int?,
-            cursor: SimpleToken?
+            cursor: SimpleToken?, context: GraphQLContext
         ): PaginatedResult<Candidate, SimpleToken> {
             return PaginatedResult(nodes = candidates, pageNumber = 1, total = candidates.size)
         }
     }
 
     class MockUserResolver : UserResolver {
-        override fun batchUser(changeLog: List<ChangeLog>): List<User> {
+        override fun batchUser(changeLog: List<ChangeLog>, context: GraphQLContext): List<User> {
             return changeLog.map { User(id = "1", email = "test@emai.com", avatarUrl = null) }
         }
 
-        override fun otherUser(changeLog: ChangeLog): User? {
+        override fun otherUser(changeLog: ChangeLog, context: GraphQLContext): User? {
             return User(id = "1", email = "test@emai.com", avatarUrl = null)
         }
     }
@@ -176,7 +177,7 @@ class GraphQLTest {
     class MockTeamMutationResolver(
         val candidates: MutableList<Candidate>
     ) : TeamMutationResolver {
-        override fun acceptInvitation(invitationId: String): Candidate {
+        override fun acceptInvitation(invitationId: String, context: GraphQLContext): Candidate {
             // Mock implementation - return the first candidate or create a new one
             return candidates.firstOrNull() ?: Candidate(
                 id = "accepted-$invitationId",

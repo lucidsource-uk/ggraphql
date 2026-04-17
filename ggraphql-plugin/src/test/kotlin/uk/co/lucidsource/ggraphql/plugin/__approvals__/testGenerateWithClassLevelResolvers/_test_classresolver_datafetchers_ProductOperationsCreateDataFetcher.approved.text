@@ -18,7 +18,7 @@ public class ProductOperationsCreateDataFetcher(
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Product?> {
     val name = env.getArgument("name") as String? 
     val price = env.getArgument("price") as Float? 
-    return CompletableFuture.supplyAsync({ service.create(name = name!!, price = price!!) },
-        executor)
+    return CompletableFuture.supplyAsync({ service.create(name = name!!, price = price!!, context =
+        env.graphQlContext) }, executor)
   }
 }

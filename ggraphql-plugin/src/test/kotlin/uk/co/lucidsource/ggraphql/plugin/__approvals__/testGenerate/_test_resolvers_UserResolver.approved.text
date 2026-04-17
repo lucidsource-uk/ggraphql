@@ -1,11 +1,12 @@
 package test.resolvers
 
+import graphql.GraphQLContext
 import kotlin.collections.List
 import test.models.BabyNested
 import test.models.User
 
 public interface UserResolver {
-  public fun batchCreatedBy(babyNested: List<BabyNested>): List<User>
+  public fun batchCreatedBy(babyNested: List<BabyNested>, context: GraphQLContext): List<User>
 
-  public fun batchUpdatedBy(babyNested: List<BabyNested>): List<User>
+  public fun batchUpdatedBy(babyNested: List<BabyNested>, context: GraphQLContext): List<User>
 }

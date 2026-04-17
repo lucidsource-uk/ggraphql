@@ -1,8 +1,9 @@
 package test.classresolver.resolvers
 
+import graphql.GraphQLContext
 import kotlin.String
 import test.classresolver.models.Product
 
 public interface CustomProductResolver {
-  public fun productById(id: String): Product?
+  public fun productById(id: String, context: GraphQLContext): Product?
 }

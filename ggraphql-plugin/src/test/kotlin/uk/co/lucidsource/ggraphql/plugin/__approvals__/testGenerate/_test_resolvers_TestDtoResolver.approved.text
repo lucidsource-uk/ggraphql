@@ -1,6 +1,7 @@
 package test.resolvers
 
 import co.uk.somepackage.UnknownType
+import graphql.GraphQLContext
 import kotlin.Int
 import test.models.Results
 import test.models.TestDto
@@ -11,5 +12,6 @@ public interface TestDtoResolver {
     pageSize: Int?,
     cursor: UnknownType?,
     testDto: TestDto,
+    context: GraphQLContext,
   ): PaginatedResult<Results, UnknownType>
 }

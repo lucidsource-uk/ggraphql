@@ -25,6 +25,6 @@ public class QueryListDataFetcher(
     val cursor = env.getArgument<Any>("cursor")?.let { deserializer.deserialize(it,
         UnknownType::class.java) } 
     return CompletableFuture.supplyAsync({ service.list(where = where, pageSize = pageSize, cursor =
-        cursor) }, executor)
+        cursor, context = env.graphQlContext) }, executor)
   }
 }

@@ -11,6 +11,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
+import graphql.GraphQLContext
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
 import org.dataloader.DataLoaderFactory
@@ -180,6 +181,12 @@ class KotlinResolverGenerator(
                                     .parameterizedBy(it.value) else it.value
                             ).build()
                         }
+                    )
+                    
+                    // Add GraphQL context parameter to all resolver methods
+                    methodBuilder.addParameter(
+                        ParameterSpec.builder("context", GraphQLContext::class)
+                            .build()
                     )
                     
                     // For methods that return resolver-only types, add default implementation

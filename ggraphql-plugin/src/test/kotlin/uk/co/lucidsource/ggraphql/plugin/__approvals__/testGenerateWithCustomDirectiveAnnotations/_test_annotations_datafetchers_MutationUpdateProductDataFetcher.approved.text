@@ -19,7 +19,7 @@ public class MutationUpdateProductDataFetcher(
     val id = env.getArgument("id") as String? 
     val input = env.getArgument<Any>("input")?.let { deserializer.deserialize(it,
         UpdateProductInput::class.java) } 
-    return CompletableFuture.supplyAsync({ service.updateProduct(id = id!!, input = input!!) },
-        executor)
+    return CompletableFuture.supplyAsync({ service.updateProduct(id = id!!, input = input!!, context
+        = env.graphQlContext) }, executor)
   }
 }

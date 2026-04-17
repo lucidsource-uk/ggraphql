@@ -16,6 +16,7 @@ public class MutationDeleteProductDataFetcher(
 ) : DataFetcher<CompletableFuture<Boolean?>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Boolean?> {
     val id = env.getArgument("id") as String? 
-    return CompletableFuture.supplyAsync({ service.deleteProduct(id = id!!) }, executor)
+    return CompletableFuture.supplyAsync({ service.deleteProduct(id = id!!, context =
+        env.graphQlContext) }, executor)
   }
 }

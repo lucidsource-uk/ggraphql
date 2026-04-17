@@ -1,6 +1,7 @@
 package test.resolvers
 
 import co.uk.somepackage.UnknownType
+import graphql.GraphQLContext
 import kotlin.Int
 import test.models.ChildNested
 import test.models.ParentNested
@@ -11,5 +12,6 @@ public interface ParentNestedResolver {
     pageSize: Int?,
     cursor: UnknownType?,
     parentNested: ParentNested,
+    context: GraphQLContext,
   ): PaginatedResult<ChildNested, UnknownType>
 }

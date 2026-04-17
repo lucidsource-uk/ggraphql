@@ -15,5 +15,5 @@ public class QueryProductsDataFetcher(
   public val executor: Executor,
 ) : DataFetcher<CompletableFuture<List<Product>>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<Product>> =
-      CompletableFuture.supplyAsync({ service.products() }, executor)
+      CompletableFuture.supplyAsync({ service.products(context = env.graphQlContext) }, executor)
 }

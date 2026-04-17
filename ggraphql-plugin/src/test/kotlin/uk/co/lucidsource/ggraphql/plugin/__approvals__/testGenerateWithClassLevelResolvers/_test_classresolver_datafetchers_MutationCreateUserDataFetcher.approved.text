@@ -17,7 +17,7 @@ public class MutationCreateUserDataFetcher(
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User?> {
     val name = env.getArgument("name") as String? 
     val email = env.getArgument("email") as String? 
-    return CompletableFuture.supplyAsync({ service.createUser(name = name!!, email = email!!) },
-        executor)
+    return CompletableFuture.supplyAsync({ service.createUser(name = name!!, email = email!!,
+        context = env.graphQlContext) }, executor)
   }
 }

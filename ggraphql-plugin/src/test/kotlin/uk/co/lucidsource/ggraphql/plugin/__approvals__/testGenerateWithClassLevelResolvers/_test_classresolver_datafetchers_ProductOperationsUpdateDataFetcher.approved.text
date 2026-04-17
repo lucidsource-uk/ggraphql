@@ -19,7 +19,7 @@ public class ProductOperationsUpdateDataFetcher(
     val id = env.getArgument("id") as String? 
     val name = env.getArgument("name") as String? 
     val price = env.getArgument("price") as Float? 
-    return CompletableFuture.supplyAsync({ service.update(id = id!!, name = name, price = price) },
-        executor)
+    return CompletableFuture.supplyAsync({ service.update(id = id!!, name = name, price = price,
+        context = env.graphQlContext) }, executor)
   }
 }

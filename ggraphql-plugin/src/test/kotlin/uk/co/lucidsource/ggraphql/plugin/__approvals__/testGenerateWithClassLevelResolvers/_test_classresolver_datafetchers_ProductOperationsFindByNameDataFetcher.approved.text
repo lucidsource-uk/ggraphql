@@ -17,6 +17,7 @@ public class ProductOperationsFindByNameDataFetcher(
 ) : DataFetcher<CompletableFuture<List<Product>>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<List<Product>> {
     val name = env.getArgument("name") as String? 
-    return CompletableFuture.supplyAsync({ service.findByName(name = name!!) }, executor)
+    return CompletableFuture.supplyAsync({ service.findByName(name = name!!, context =
+        env.graphQlContext) }, executor)
   }
 }

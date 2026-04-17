@@ -1,17 +1,23 @@
 package test.classresolver.resolvers
 
+import graphql.GraphQLContext
 import kotlin.Boolean
 import kotlin.String
 import test.classresolver.models.User
 
 public interface MutationResolver {
-  public fun createUser(name: String, email: String): User?
+  public fun createUser(
+    name: String,
+    email: String,
+    context: GraphQLContext,
+  ): User?
 
   public fun updateUser(
     id: String,
     name: String?,
     email: String?,
+    context: GraphQLContext,
   ): User?
 
-  public fun deleteUser(id: String): Boolean?
+  public fun deleteUser(id: String, context: GraphQLContext): Boolean?
 }

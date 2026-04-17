@@ -10,6 +10,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
+import graphql.GraphQLContext
 import graphql.language.FieldDefinition
 import graphql.language.ObjectTypeDefinition
 import graphql.language.TypeName
@@ -188,46 +189,56 @@ class KotlinDataFetcherTypeGenerator(
                         )
                     )
                 } else if (objectTypeDefinition.isExcludedFromCodeGenerationAspectApplied()) {
+                    val parameterList = field.inputValueDefinitions.joinToString(", ") {
+                        it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
+                                it.type
+                            )
+                        ) "" else "!!")
+                    }
+                    val contextParam = "context = env.graphQlContext"
+                    val allParams = if (parameterList.isEmpty()) contextParam else "$parameterList, $contextParam"
+                    
                     dataFetcherGet.addCode(
                         CodeBlock.of(
                             "return CompletableFuture.supplyAsync({ service.%L(%L) }, executor)",
                             field.name,
-                            field.inputValueDefinitions.joinToString(", ") {
-                                it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
-                                        it.type
-                                    )
-                                ) "" else "!!")
-                            }
+                            allParams
                         )
                     )
                 } else if (objectTypeDefinition.isResolverOnlyType()) {
                     // For resolver-only parent types, don't pass the parent instance
+                    val parameterList = field.inputValueDefinitions.joinToString(", ") {
+                        it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
+                                it.type
+                            )
+                        ) "" else "!!")
+                    }
+                    val contextParam = "context = env.graphQlContext"
+                    val allParams = if (parameterList.isEmpty()) contextParam else "$parameterList, $contextParam"
+                    
                     dataFetcherGet.addCode(
                         CodeBlock.of(
                             "return CompletableFuture.supplyAsync({ service.%L(%L) }, executor)",
                             field.name,
-                            field.inputValueDefinitions.joinToString(", ") {
-                                it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
-                                        it.type
-                                    )
-                                ) "" else "!!")
-                            }
+                            allParams
                         )
                     )
                 } else {
+                    val parameterList = field.inputValueDefinitions.joinToString(", ") {
+                        it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
+                                it.type
+                            )
+                        ) "" else "!!")
+                    }
+                    val contextParam = "context = env.graphQlContext"
+                    val parentParam = "${objectTypeDefinition.name.replaceFirstChar { it.lowercase() }} = env.getSource<${typeResolver.getKotlinTypeForModel(TypeName(objectTypeDefinition.name)).copy(nullable = false)}>()"
+                    val allParams = if (parameterList.isEmpty()) "$parentParam, $contextParam" else "$parentParam, $parameterList, $contextParam"
+                    
                     dataFetcherGet.addCode(
                         CodeBlock.of(
-                            "return CompletableFuture.supplyAsync({ service.%L(%L = env.getSource<%T>(), %L) }, executor)",
+                            "return CompletableFuture.supplyAsync({ service.%L(%L) }, executor)",
                             field.name,
-                            objectTypeDefinition.name.replaceFirstChar { it.lowercase() },
-                            typeResolver.getKotlinTypeForModel(TypeName(objectTypeDefinition.name))
-                                .copy(nullable = false),
-                            field.inputValueDefinitions.joinToString(", ") {
-                                it.name + " = " + it.name + (if (GraphQLTypeUtil.isNullType(
-                                        it.type
-                                    )
-                                ) "" else "!!")
-                            }
+                            allParams
                         )
                     )
                 }

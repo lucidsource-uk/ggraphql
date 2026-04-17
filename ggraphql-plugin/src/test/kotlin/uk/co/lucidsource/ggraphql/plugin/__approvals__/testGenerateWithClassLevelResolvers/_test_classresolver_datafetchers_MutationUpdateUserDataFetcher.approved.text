@@ -18,7 +18,7 @@ public class MutationUpdateUserDataFetcher(
     val id = env.getArgument("id") as String? 
     val name = env.getArgument("name") as String? 
     val email = env.getArgument("email") as String? 
-    return CompletableFuture.supplyAsync({ service.updateUser(id = id!!, name = name, email = email)
-        }, executor)
+    return CompletableFuture.supplyAsync({ service.updateUser(id = id!!, name = name, email = email,
+        context = env.graphQlContext) }, executor)
   }
 }

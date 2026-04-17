@@ -17,6 +17,7 @@ public class QueryCreateProductDataFetcher(
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<Product?> {
     val input = env.getArgument<Any>("input")?.let { deserializer.deserialize(it,
         CreateProductInput::class.java) } 
-    return CompletableFuture.supplyAsync({ service.createProduct(input = input!!) }, executor)
+    return CompletableFuture.supplyAsync({ service.createProduct(input = input!!, context =
+        env.graphQlContext) }, executor)
   }
 }

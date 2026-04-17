@@ -14,5 +14,5 @@ public class QueryUsersDataFetcher(
   public val executor: Executor,
 ) : DataFetcher<CompletableFuture<User>> {
   override fun `get`(env: DataFetchingEnvironment): CompletableFuture<User> =
-      CompletableFuture.supplyAsync({ service.users() }, executor)
+      CompletableFuture.supplyAsync({ service.users(context = env.graphQlContext) }, executor)
 }

@@ -1,14 +1,15 @@
 package test.resolvers
 
+import graphql.GraphQLContext
 import kotlin.collections.List
 import test.models.BabyNested
 import test.models.ChildNested
 import test.models.ParentNested
 
 public interface NodeResolver {
-  public fun babies(childNested: ChildNested): List<BabyNested?>?
+  public fun babies(childNested: ChildNested, context: GraphQLContext): List<BabyNested?>?
 
-  public fun babiesReq(childNested: ChildNested): List<BabyNested>
+  public fun babiesReq(childNested: ChildNested, context: GraphQLContext): List<BabyNested>
 
-  public fun children(parentNested: ParentNested): List<ChildNested?>?
+  public fun children(parentNested: ParentNested, context: GraphQLContext): List<ChildNested?>?
 }
