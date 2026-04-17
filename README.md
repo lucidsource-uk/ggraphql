@@ -307,22 +307,35 @@ class GraphQLConfiguration {
             .build()
     }
     
-    fun buildDataLoaderRegistry(): DataLoaderRegistry {
+    // Must be called per-request, passing in the GraphQLContext so it is
+    // available to batched resolvers via DataFetchingEnvironment.getGraphQlContext()
+    fun buildDataLoaderRegistry(graphQLContext: GraphQLContext): DataLoaderRegistry {
         return DataLoaderRegistryConfiguration(
-            userResolver = UserResolverImpl(userService),
-            postResolver = PostResolverImpl(postService),
-            executor = ForkJoinPool()
-        ).applyConfiguration(DataLoaderRegistry.newRegistry())
-            .build()
+            userResolver = userResolver,
+            postResolver = postResolver,
+            executor = graphQLAsyncExecutor,
+            options = DataLoaderOptions.newOptions()
+                .setBatchLoaderContextProvider { graphQLContext }
+                .build()
+        ).applyConfiguration(DataLoaderRegistry.newRegistry()).build()
     }
 }
 ```
 
 ### 7. Executing GraphQL Queries
 
+The `DataLoaderRegistry` must be constructed **per request** and receive the `GraphQLContext` so that batched resolvers can access request-scoped data (e.g. authentication, tenant info). Reusing a registry across requests will cause data to leak between them.
+
 ```kotlin
 val graphQL = graphQLConfiguration.buildGraphQL()
-val dataLoaderRegistry = graphQLConfiguration.buildDataLoaderRegistry()
+
+// Build a fresh GraphQLContext for this request (e.g. from HTTP headers)
+val graphQLContext = GraphQLContext.newContext()
+    .put("userId", currentUserId)
+    .build()
+
+// Registry is created per-request with the context injected
+val dataLoaderRegistry = graphQLConfiguration.buildDataLoaderRegistry(graphQLContext)
 
 val executionInput = ExecutionInput.newExecutionInput()
     .query("""
@@ -343,6 +356,7 @@ val executionInput = ExecutionInput.newExecutionInput()
             }
         }
     """)
+    .graphQLContext(graphQLContext)
     .dataLoaderRegistry(dataLoaderRegistry)
     .build()
 
